@@ -49,9 +49,9 @@ function stndrd(n) {
 	if (n == 2) return "rd";
 	return "th";
 }
-function goodmorning() {
+function goodmorning(ctx) {
 	let date = new Date();
-	channel.embedreply({
+	ctx.embedreply({
 		title: "Good Morning",
 		msg: `It is **${days[date.getDay()]}**, the **${date.getDay() + 1}${stndrd(date.getDay())}** of **${months[date.getMonth()]}**, **${date.getFullYear()}**\n\n > ${dailyrandom(quotes)}`,
 		color: [0, 255, 255]
@@ -59,10 +59,10 @@ function goodmorning() {
 }
 
 client.once("ready", async function() {
-	channel = await client.channels.fetch("851076951371546644");
+	channel = await client.channels.fetch(conf.goodmorning);
 	channel.embedreply = client._embedreply;
 	cron.schedule("0 7 * * *", () => {
-		goodmorning();
+		goodmorning(channel);
 	});
 });
 
@@ -70,7 +70,7 @@ module.exports.cmds = {
 	"goodmorning": {
 		desc: "Say good morning text",
 		func: async function (args) {
-			goodmorning();
+			goodmorning(this);
 		}
 	},
 	"quote": {
