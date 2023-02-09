@@ -3,26 +3,6 @@ const nekosurl  = "https://nekos.life/api/v2/img/"
 const wikiurl1 = "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageprops&ppprop=disambiguation&generator=search&gsrinterwiki=1&gsrsearch=";
 const wikiurl2 = "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts%7Cpageimages&exintro=1&explaintext=1&exsectionformat=plain&piprop=original&exchars=1000&pageids=";
 
-function ffetch(url) {
-	return new Promise((resolve, reject) => {
-		http.get(url, res => {
-			if (res.statusCode !== 200) {
-				res.resume();
-				reject(res.statusCode);
-				return;
-			}
-			let body = "";
-			res.on("data", chunk => { body += chunk; });
-			res.on("end", () => {
-				resolve(body)
-			});
-		}).on("error", e => {
-			reject(e);
-		});
-	});
-}
-
-
 module.exports.cmds = {
 	"neko": {
 		desc: "Cute nekos",
@@ -58,26 +38,26 @@ module.exports.cmds = {
 			// fetch initial wiki page(s)
 			data = await ffetch(`${wikiurl1}${args[0]}`);
 			data = JSON.parse(data);
-			if (data.query === undefined) { // no query, no pages
-				this.embedreply({
-					msg: `No pages found for "${args[0]}"`,
-					color: [255, 255, 255]
-				});
+			if (data.query === undefined || data.query.pages.length === 0) { // no query, no pages
+				this.errorreply(`No pages found for "${args[0]}"`);
 				return;
 			}
-			out = [];
-			for (let i in data.query.pages) { // code pages
-				i = data.query.pages[i];
-				if (i.title.indexOf("(disambiguation)") !== -1) // disambiguation page
-					continue
-				if (i.pageprops) // has pageprops: { disambiguation: '' } ie is disambiguation page
-					continue;
-				out.push(i);
-			}
-			let extract = "*Disambiguation: " + out.slice(1).map((i) => { // add disambiguation text
-			return `[${i.title}](https://wikipedia.com/wiki/${encodeURIComponent(i.title)})`;
-		}).join(", ") + "*\n";
-			if (out.length === 0) { // no non disambiguation articles found
+			out = undefined;
+			let extract = "";
+			Object.values(data.query.pages).sort((a, b) => {
+				return a.index - b.index;
+			}).forEach(i => { // code pages
+				// has pageprops: { disambiguation: '' } ie is disambiguation page
+				// or out has already been defined
+				if (out || i.pageprops) {
+					extract += `[${i.title}](https://wikipedia.com/wiki/${encodeURIComponent(i.title)}), `;
+					return;
+				};
+				out = i;
+			});
+			if (extract.length > 0) // add disambiguation starting text if there were disambiguations
+				extract = "*Disambiguation: " + extract.slice(0, -2) + "*\n";
+			if (out === undefined) { // no non disambiguation articles found
 				this.embedreply({ // off we go
 					msg: extract,
 					title: encodeURIComponent(args[0]),
@@ -85,8 +65,8 @@ module.exports.cmds = {
 					color: [255, 255, 255]
 				});
 			} else {
-				data = await ffetch(`${wikiurl2}${out[0].pageid}`) // get content of "main" page
-				data = JSON.parse(data).query.pages[String(out[0].pageid)]; // get data from responce
+				data = await ffetch(`${wikiurl2}${out.pageid}`) // get content of "main" page
+				data = JSON.parse(data).query.pages[String(out.pageid)]; // get data from responce
 				extract += "\n" + data.extract;
 				this.embedreply({ // off we go
 					msg: extract,

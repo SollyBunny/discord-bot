@@ -46,6 +46,24 @@ log.warn = (m) => {
 log.error = (m) => {
 	console.log(`\x1b[31mE:\x1b[0m ${m}`)
 };
+global.ffetch = async function(url) {
+	return new Promise((resolve, reject) => {
+		http.get(url, res => {
+			if (res.statusCode !== 200) {
+				res.resume();
+				reject(res.statusCode);
+				return;
+			}
+			let body = "";
+			res.on("data", chunk => { body += chunk; });
+			res.on("end", () => {
+				resolve(body)
+			});
+		}).on("error", e => {
+			reject(e);
+		});
+	});
+}
 
 global.client = new dc.Client({
 	intents: [ 

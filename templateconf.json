@@ -3,5 +3,8 @@
 	"prefix": "!",
 	"admins": ["<your id here>"],
 	"color": [10, 20, 30],
-	"goodmorning": "<goodmorning channel id here>"
+	"goodmorningchannel": "<goodmorning channel id here>",
+	"goodmorninglocation": "New York City",
+	"visualcrossingkey": "<visualcrossing key>"
 }
+
