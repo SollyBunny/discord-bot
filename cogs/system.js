@@ -110,13 +110,16 @@ module.exports.cmds = {
 	"purge": {
 		desc: "Delete multiple messages",
 		args: [
-			[dc.INT, "messages", "Number of messages to purge", true, 1, 100],
+			[dc.INT, "messages", "Number of messages to purge", true, 1, 99],
 		],
 		perm: dc.PermissionFlagsBits.ManageMessages,
 		dm: false,
-		hide: true,
 		func: async function (args) {
-			console.log(args)
+			try {
+				await this.channel.bulkDelete(args[0] + 1)
+			} catch {
+				this.errorreply("Purge failed");
+			}
 		}
 	},
 	"perms": {

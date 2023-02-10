@@ -190,7 +190,7 @@ client.once("ready", async () => {
 			name_localizations: undefined,
 			description_localizations: undefined,
 			default_permission: undefined,
-			default_member_permissions: client.cmds[i].perms && String(client.cmds[i].perms),
+			default_member_permissions: client.cmds[i].perm && String(client.cmds[i].perm),
 			dm_permission: client.cmds[i].dm
 		};
 		if (client.cmds[i].args) {
@@ -393,7 +393,7 @@ client.on("messageCreate", async msg => {
 		return;
 	};
 	if (msg.inGuild()) {
-		if (cmd.perms && conf.admins.indexOf(msg.member.id) === -1 && !msg.member.permissions.has(cmd.perms)) {
+		if (cmd.perm && conf.admins.indexOf(msg.member.id) === -1 && !msg.member.permissions.has(cmd.perm)) {
 			msg.errorreply("You are missing permissions:\n\`" + new dc.PermissionsBitField(cmd.perms & ~msg.member.permissions.bitfield).toArray().join("\`, \`") + "\`");
 			return;
 		}

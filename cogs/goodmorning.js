@@ -1,16 +1,18 @@
 
 const cron = require("node-cron");
+const quotes = require("./goodmorning.json");
 
 let channel;
+let dailyrandomseed = Math.floor(Math.random() * 100000);
 
 const days = [
+	"Sunday",
 	"Monday",
 	"Tuesday",
 	"Wednesday",
 	"Thursday",
 	"Friday",
-	"Saturday",
-	"Sunday"
+	"Saturday"
 ];
 const months = [
 	"January",
@@ -26,23 +28,14 @@ const months = [
 	"November",
 	"December"
 ];
-const quotes = require("./goodmorning.json");
 
 function dailyrandom(l) {
-	const date = new Date(Date.now());
-	let day = (date.getFullYear() * 12 * 30 + date.getMonth() * 30 + date.getDate()).toString();
-	let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
-	for (let i = 0, m; i < day.length; ++i) {
-		m = day.charCodeAt(i);
-		h1 = h2 ^ Math.imul(h1 ^ m, 597399067);
-		h2 = h3 ^ Math.imul(h2 ^ m, 2869860233);
-		h3 = h4 ^ Math.imul(h3 ^ m, 951274213);
-		h4 = h1 ^ Math.imul(h4 ^ m, 2716044179);		
-	}
-	day = (h1 ^ h2 ^ h3 ^ h4) >>> 0;
-	day %= l.length;
-	return l[day];
+	return l[dailyrandomseed % l.length]
 }
+function dailybully(channel) {
+	return channel.members.at(dailyrandomseed % channel.members.size);
+}
+
 function stndrd(n) {
 	n = n.toString().at(-1);
 	if (n == 0) return "st";
@@ -54,10 +47,11 @@ async function goodmorning(ctx) {
 	let date = new Date();
 	let embed = await weathertoday(conf.goodmorninglocation);
 	embed.title = "Good morning";
-	embed.msg = `It is **${days[date.getDay()]}**, the **${date.getDay() + 1}${stndrd(date.getDay())}** of **${months[date.getMonth()]}**, **${date.getFullYear()}**\n\n > ${dailyrandom(quotes)}\n\n` + embed.msg;
+	embed.msg = `It is **${days[date.getDay()]}**, the **${date.getDate() + 1}${stndrd(date.getDay())}** of **${months[date.getMonth()]}**, **${date.getFullYear()}**\n\n > ${dailyrandom(quotes)}\n\n` + embed.msg;
 	embed.url = undefined;
 	ctx.embedreply(embed);
 }
+
 async function weathertoday(location) {
 	let data;
 	try {
@@ -122,8 +116,12 @@ client.once("ready", async function() {
 	channel = await client.channels.fetch(conf.goodmorningchannel);
 	channel.embedreply = client._embedreply;
 	cron.schedule("0 7 * * *", () => {
+		dailyrandomseed = Math.floor(Math.random() * 100000);
 		goodmorning(channel);
 	});
+	cron.schedule("22 22 * * *", () => {
+		channel.send({ content: "22:22!" });
+	})
 });
 
 module.exports.cmds = {
@@ -151,6 +149,18 @@ module.exports.cmds = {
 		],
 		func: async function (args) {
 			this.embedreply(await weathertoday(args[0]));
+		}
+	},
+	"bully": {
+		desc: "Who's being bullied today",
+		dm: false,
+		func: async function (args) {
+			console.log(dailybully(this.channel))
+			this.embedreply({
+				title: "Bully",
+				color: [128, 5, 5],
+				msg: `<@${dailybully(this.channel).user.id}> is being bullied today`
+			});
 		}
 	}
 };
