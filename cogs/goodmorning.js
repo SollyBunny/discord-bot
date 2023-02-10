@@ -33,7 +33,12 @@ function dailyrandom(l) {
 	return l[dailyrandomseed % l.length]
 }
 function dailybully(channel) {
-	return channel.members.at(dailyrandomseed % channel.members.size);
+	let members = channel.members;
+	members = members.filter(i => {
+		if (i.user.system || i.user.bot) return false;
+		return true;
+	})
+	return members.at(dailyrandomseed % channel.members.size);
 }
 
 function stndrd(n) {
@@ -47,7 +52,7 @@ async function goodmorning(ctx) {
 	let date = new Date();
 	let embed = await weathertoday(conf.goodmorninglocation);
 	embed.title = "Good morning";
-	embed.msg = `It is **${days[date.getDay()]}**, the **${date.getDate() + 1}${stndrd(date.getDay())}** of **${months[date.getMonth()]}**, **${date.getFullYear()}**\n\n > ${dailyrandom(quotes)}\n\n` + embed.msg;
+	embed.msg = `It is **${days[date.getDay()]}**, the **${date.getDate()}${stndrd(date.getDay())}** of **${months[date.getMonth()]}**, **${date.getFullYear()}**\n\n > ${dailyrandom(quotes)}\n\n` + embed.msg;
 	embed.url = undefined;
 	ctx.embedreply(embed);
 }
@@ -155,7 +160,6 @@ module.exports.cmds = {
 		desc: "Who's being bullied today",
 		dm: false,
 		func: async function (args) {
-			console.log(dailybully(this.channel))
 			this.embedreply({
 				title: "Bully",
 				color: [128, 5, 5],
