@@ -3,8 +3,9 @@
 	"prefix": "!",
 	"admins": ["<your id here>"],
 	"color": [10, 20, 30],
-	"goodmorningchannel": "<goodmorning channel id here>",
-	"goodmorninglocation": "New York City",
+	"goodmorning": [
+		["<daily bully channel>", "<good morning channel>", "<location>"]
+	]
 	"visualcrossingkey": "<visualcrossing key>"
 }
 
