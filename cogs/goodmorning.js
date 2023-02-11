@@ -41,7 +41,7 @@ function dailybully(channel) {
 	return {
 		title: "Bully",
 		color: [128, 5, 5],
-		msg: `<@${members.at(dailyrandomseed % channel.members.size).user.id}> is being bullied today`
+		msg: `<@${members.at(dailyrandomseed % members.size).user.id}> is being bullied today`
 	};
 }
 
