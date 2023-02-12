@@ -46,11 +46,14 @@ function dailybully(channel) {
 }
 
 function stndrd(n) {
-	n = n.toString().at(-1);
-	if (n == 0) return "st";
-	if (n == 1) return "nd";
-	if (n == 2) return "rd";
-	return "th";
+	n = n.toString();
+	if (n.at(-2) === "1") return "th";
+	switch (n.at(-1)) {
+		case "1": return "st";
+		case "2": return "nd";
+		case "3": return "rd";
+		default: return "th";
+	}
 }
 
 async function weathertoday(location) {
@@ -176,5 +179,5 @@ module.exports.cmds = {
 		func: async function (args) {
 			this.embedreply(dailybully(this.channel));
 		}
-	}
+	},
 };
