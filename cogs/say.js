@@ -1,6 +1,67 @@
-const thegame = "The game, The game 2, The thought, The memory, The thing, The hand, Sus, Among us, I hardly know her, Egad my roast is ruined, Egam, Have you found your micrphone yet?"
+const thegame = "The game, The game 2, The thought, The memory, The thing, The hand, Sus, Among us, I hardly know her, That's what she said, Egad my roast is ruined, Emag, Have you found your micrphone yet? (try looking in the kettle), t minus 7 seconds"
+
+const predict = require("./predict.json");
+const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ !?*(),.#\"\'\n".split("");
+
+function levdis(a, b) {
+	// https://en.wikipedia.org/wiki/Levenshtein_distance
+	if (a.length === 0) return b.length;
+	if (b.length === 0) return a.length;
+	if (a[0] == b[0]) return levdis(a.slice(1), b.slice(1));
+	return Math.min(
+		levdis(a.slice(1), b),
+		levdis(a, b.slice(1)),
+		levdis(a.slice(1), b.slice(1))
+	) + 1;
+}
+
+function isnearlist(l, v, t) {
+	l = l.map(i => { // work out all levdis from v
+		return [i, levdis(i, v)];
+	});
+	l = l.filter(i => { // remove elements with distance bigger than t
+		return i[1] < t
+	});
+	l = l.sort((a, b) => { // sort by levdis
+		return a[1] - b[1];
+	});
+	l = l.map(i => { // remove levdis
+		return i[0];
+	});
+	return l;
+}
 
 module.exports.cmds = {
+	"sticker": {
+		desc: "Send a sticker",
+		args: [
+			[dc.CHOICE, "name", "Name of sticker", true, Object.keys(conf.stickers)]
+		],
+		hide: true,
+		func: async function (args) {
+			this.webhookreply(this.member, conf.stickers[args[0]]);
+		}
+	},
+	"welsh": {
+		desc: "Use a bad predictive model to speak welsh",
+		hide: true,
+		func: async function (args) {
+			let prevchar = chars[Math.floor(Math.random() * 26) + 26];
+			let out = prevchar;
+			let ran;
+			let i;
+			while (1) {
+				ran = Math.random();
+				for (i = 0; i < chars.length; ++i)
+					if (predict[prevchar][i] > ran) break;
+				if (i === chars.length) break;
+				out += chars[i];
+				prevchar = chars[i];
+				if (out.length > 100) break;
+			}
+			this.webhookreply(this.member, out);
+		}
+	},
 	"game": {
 		desc: "The Game!!! (and much more)",
 		func: async function (args) {
@@ -30,6 +91,7 @@ module.exports.cmds = {
 			[dc.USER, "user", "Who says this", false],
 			[dc.BIGTEXT, "text", "What to say", true],
 		],
+		dm: false,
 		hide: true,
 		func: async function (args) {
 			this.webhookreply(args[0] || this.member, args[1] || "");
@@ -97,9 +159,9 @@ module.exports.cmds = {
 		}
 	},
     "weird": {
-        desc: "Mirror text",
+        desc: "Replace reflected characters with reflected characters",
 		args: [
-			[dc.BIGTEXT, "text", "What to mirror", true],
+			[dc.BIGTEXT, "text", "What to weirdify", true],
 		],
 		hide: true,
 		func: async function (args) {
@@ -107,44 +169,91 @@ module.exports.cmds = {
             let l;
             for (let i = 0; i < args[0].length; ++i) {
                 switch (args[0][i]) {
-                    case 'p':
-                        l = 'Q';
-                        break;
-                    case 'P':
-                        l = 'q';
-                        break;
-                    case 'q':
-                        l = 'P';
-                        break;
-                    case 'Q':
-                        l = 'p';
-                        break;
-                    case 'b':
-                        l = 'D';
-                        break;
-                    case 'B':
-                        l = 'd';
-                        break;
-                    case 'd':
-                        l = 'B';
-                        break;
-                    case 'D':
-                        l = 'b';
-                        break;
-                    case 'm':
-                        l = 'N';
-                        break;
-                    case 'M':
-                        l = 'n';
-                        break;
-                    case 'n':
-                        l = 'M';
-                        break;
-                    case 'N':
-                        l = 'm';
-                        break;
-                    default:
-                        l = args[0][i];
+                    case 'p': l = 'Q'; break;
+                    case 'P': l = 'q'; break;
+                    case 'q': l = 'P'; break;
+                    case 'Q': l = 'p'; break;
+                    case 'b': l = 'D'; break;
+                    case 'B': l = 'd'; break;
+                    case 'd': l = 'B'; break;
+                    case 'D': l = 'b'; break;
+                    case 'm': l = 'W'; break;
+                    case 'M': l = 'w'; break;
+                    case 'w': l = 'M'; break;
+                    case 'W': l = 'm'; break;
+                    case 'n': l = 'U'; break;
+                    case 'N': l = 'u'; break;
+                    case 'n': l = 'u'; break;
+                    case 'N': l = 'U'; break;
+                    default: l = args[0][i];
+                }
+                out += l;
+            }
+            this.webhookreply(this.member, out);
+        }
+    },
+    "russian": {
+        desc: "Turn latin text into cyrillic text",
+		args: [
+			[dc.BIGTEXT, "text", "What to communize", true],
+		],
+		hide: true,
+		func: async function (args) {
+            let out = "";
+            for (let l, i = 0; i < args[0].length; ++i) {
+                switch (args[0][i]) {
+					// case 'a': l = 'a'; break;
+					case 'b': l = 'в'; break;
+					case 'd': l = 'д'; break;
+					case 'e': l = 'з'; break;
+					// case 'f': l = 'f'; break;
+					case 'g': l = 'g'; break;
+					case 'h': l = 'н'; break;
+					// case 'i': l = 'i'; break;
+					// case 'j': l = 'j'; break;
+					case 'k': l = 'k'; break;
+					case 'l': l = 'l'; break;
+					case 'm': l = 'm'; break;
+					case 'n': l = 'n'; break;
+					case 'o': l = 'o'; break;
+					case 'p': l = 'p'; break;
+					case 'q': l = 'q'; break;
+					case 'r': l = 'r'; break;
+					case 's': l = 's'; break;
+					case 't': l = 'т'; break;
+					case 'u': l = 'u'; break;
+					case 'v': l = 'v'; break;
+					case 'w': l = 'w'; break;
+					case 'x': l = 'x'; break;
+					case 'y': l = 'y'; break;
+					case 'z': l = 'z'; break;
+					case 'A': l = 'A'; break;
+					case 'B': l = 'B'; break;
+					case 'C': l = 'C'; break;
+					case 'D': l = 'D'; break;
+					case 'E': l = 'E'; break;
+					case 'F': l = 'F'; break;
+					case 'G': l = 'G'; break;
+					case 'H': l = 'H'; break;
+					case 'I': l = 'I'; break;
+					case 'J': l = 'J'; break;
+					case 'K': l = 'K'; break;
+					case 'L': l = 'L'; break;
+					case 'M': l = 'M'; break;
+					case 'N': l = 'N'; break;
+					case 'O': l = 'O'; break;
+					case 'P': l = 'P'; break;
+					case 'Q': l = 'Q'; break;
+					case 'R': l = 'R'; break;
+					case 'S': l = 'S'; break;
+					case 'T': l = 'T'; break;
+					case 'U': l = 'U'; break;
+					case 'V': l = 'V'; break;
+					case 'W': l = 'W'; break;
+					case 'X': l = 'X'; break;
+					case 'Y': l = 'Y'; break;
+					case 'Z': l = 'Z'; break;
+                    default: l = args[0][i];
                 }
                 out += l;
             }

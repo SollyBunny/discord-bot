@@ -1,11 +1,19 @@
 module.exports.cmds = {
 	"crash": {
 		desc: "Raise an error",
+		admin: true,
 		args: [
 			[dc.TEXT, "message", "Message to show as error", false],			
 		],
 		func: async function (args) {
 			throw Error(args[0] || "Crash Command");
+		}
+	},
+	"doevents": {
+		desc: "Activate all events",
+		admin: true,
+		func: async function (args) {
+			this.reply("hi")
 		}
 	},
 	"immortal": {
@@ -15,9 +23,9 @@ module.exports.cmds = {
 			[dc.USER, "user", "User to make immortal", false],
 			[dc.INT, "server", "ID of the server", false]
 		],
-		perms: dc.PermissionFlagsBits.Administrator,
+		admin: true,
 		func: async function (args) {
-			args[1] = args[1] || args[1].member || args[1].user;
+			args[1] = args[1] || args[1].member || args[1].author;
 			if (args[2]) {
 				args[2] = await client.guilds.fetch(String(args[2]));
 				if (!args[2]) {

@@ -1,5 +1,33 @@
 #!/usr/bin/env node
 
+function levdis(a, b) {
+	// https://en.wikipedia.org/wiki/Levenshtein_distance
+	if (a.length === 0) return b.length;
+	if (b.length === 0) return a.length;
+	if (a[0] == b[0]) return levdis(a.slice(1), b.slice(1));
+	return Math.min(
+		levdis(a.slice(1), b),
+		levdis(a, b.slice(1)),
+		levdis(a.slice(1), b.slice(1))
+	) + 1;
+}
+
+function isnearlist(l, v, t) {
+	l = l.map(i => { // work out all levdis from v
+		return [i, levdis(i, v)];
+	});
+	l = l.filter(i => { // remove elements with distance bigger than t
+		return i[1] < t
+	});
+	l = l.sort((a, b) => { // sort by levdis
+		return a[1] - b[1];
+	});
+	l = l.map(i => { // remove levdis
+		return i[0];
+	});
+	return l;
+}
+
 global.conf = require("./conf.json");
 global.http = require("https");
 global.fs   = require("fs");
@@ -86,6 +114,15 @@ global.client = new dc.Client({
 		dc.IntentsBitField.Flags.GuildWebhooks,
 		dc.IntentsBitField.Flags.Guilds,
 		dc.IntentsBitField.Flags.MessageContent,
+	],
+	partials: [
+		dc.Partials.User,
+		dc.Partials.Channel,
+		dc.Partials.GuildMember,
+		dc.Partials.Message,
+		dc.Partials.Reaction,
+		dc.Partials.GuildScheduledEvent,
+		dc.Partials.ThreadMembe
 	]
 });
 
@@ -179,10 +216,15 @@ SlashCommandBuilder {
 }
 */
 client.once("ready", async () => {
-	client.user.setActivity("Ping me to get help!", { type: "PLAYING" });
+	client.user.setPresence({
+		activities: [{
+			name: "Ping to get help!"
+		}],
+	});
 	log.info(`Ready as ${client.user.tag}`);
 	let commands = [];
 	Object.keys(client.cmds).forEach(i => {
+		if (client.cmds[i].admin) return;
 		let command = {
 			name: i,
 			description: client.cmds[i].desc,
@@ -304,6 +346,10 @@ client._errorreply = async function(msg) {
 }
 
 client._webhookreply = async function(user, msg) {
+	if (!this.inGuild()) {
+		this.reply(msg); // TODO find some way to alert the user of the inability of webhooks in DMs
+		return;
+	}
 	let webhook = await this.channel.createWebhook({
 		name: user.nickname || user.username || user.user.username,
 		channel: this.channel,
@@ -322,7 +368,7 @@ client.on("interactionCreate", async itn => {
 	let cmd = client.cmds[itn.commandName];
 	itn.embedreply = client._embedreply;
 	itn.errorreply = client._errorreply;
-	if (!cmd) {
+	if (!cmd) { // just in case
 		this.errorreply("No command found");
 		return;
 	}
@@ -355,7 +401,7 @@ client.on("interactionCreate", async itn => {
 			}
 		};
 	}
-	if (cmd.hide) {
+	if (cmd.hide && msg.inGuild()) {
 		itn.reply({ content: "-" }); // allow actuall replies, only hiding the initial "bot is thinking" and subsequent error
 		await itn.deleteReply();
 	};
@@ -370,8 +416,8 @@ client.on("messageCreate", async msg => {
 	msg.embedreply   = client._embedreply;
 	msg.webhookreply = client._webhookreply;
 	msg.errorreply   = client._errorreply;
-	if (msg.content === client.user.toString()) {
-		this.errorreply("Not implemented yet");
+	if (msg.content === client.user.toString()) { // help by ping
+		client.cmds["help"].func.bind(msg)([]);
 		return;
 	}
 	if (msg.content[0] !== conf.prefix) return;
@@ -387,21 +433,34 @@ client.on("messageCreate", async msg => {
 	cmd = cmd.toLowerCase();
 	if (!/[a-z]/.test(cmd)) return; // a command with non a-z characters is probably invalid, just ignore it (so strings like ._. don't activate)
 	log.info(`cmd ${msg.author.tag}: ${cmd} ${msg.content}`);
-	cmd = client.cmds[cmd];
-	if (!cmd) {
-		msg.errorreply("No command found");
-		return;
-	};
-	if (msg.inGuild()) {
-		if (cmd.perm && conf.admins.indexOf(msg.member.id) === -1 && !msg.member.permissions.has(cmd.perm)) {
-			msg.errorreply("You are missing permissions:\n\`" + new dc.PermissionsBitField(cmd.perms & ~msg.member.permissions.bitfield).toArray().join("\`, \`") + "\`");
+	if (client.cmds[cmd]) {
+		cmd = client.cmds[cmd];
+	} else { // use fuzzy match
+		let match = isnearlist(Object.keys(client.cmds), cmd, 3);
+		if (match.length === 0) { // nothing near to it
+			msg.errorreply("No command found");
 			return;
 		}
-	} else {
-		if (cmd.dm === false) {
+		cmd = client.cmds[match[0]]; // chose nearest match
+	}
+
+	if (conf.admins.indexOf(msg.author.id) === -1) {
+		if (cmd.admin) {
+			msg.errorreply("You need to be bot admin to use this command");
+			return;
+		}
+		if (msg.inGuild()) {
+			if (cmd.perm && !msg.member.permissions.has(cmd.perm)) {
+				msg.errorreply("You are missing permissions:\n\`" + new dc.PermissionsBitField(cmd.perms & ~msg.member.permissions.bitfield).toArray().join("\`, \`") + "\`");
+				return;
+			}
+		} else if (cmd.dm === false) {
 			msg.errorreply("This command cannot be used in DMs");
 			return;	
 		}
+	} else if (cmd.dm === false && !msg.inGuild()) {
+		msg.errorreply("This command cannot be used in DMs");
+		return;	
 	}
 		
 	if (cmd.args) {
@@ -425,27 +484,21 @@ client.on("messageCreate", async msg => {
 			}
 			switch (cmd.args[i][0]) {
 				case dc.USER:
-					let members = await msg.channel.guild.members.fetch()
+					/*let members;
+					if (msg.inGuild())
+						members = await msg.channel.guild.members.fetch()
+					else
+						members = [msg.channel.re]*/ // TODO
 					let id = msg.content[i].match(/[0-9]+/);
 					if (id) {
 						id = id[0];
-						let user = members.get(id); // get user guild member
-						if (user) {
-							args.push(user);
-							break;
-						}
-						user = client.users.cache.get(id); // get user from caches
-						if (user) {
-							args.push(user);
-							break;
-						}
-						user = await client.users.fetch(id) // try fetch user
+						user = await client.users.fetch(id) // try fetch user (also looks in cache)
 						if (user) {
 							args.push(user);
 							break;
 						}
 					}
-					this.errorreply("Invalid user");
+					msg.errorreply("Invalid user");
 					return;
 				case dc.BIGTEXT:
 					let txt = msg.content.slice(i).join(" ");
@@ -457,8 +510,12 @@ client.on("messageCreate", async msg => {
 				case dc.CHOICE:
 					msg.content[i] = msg.content[i].toLowerCase();
 					if (cmd.args[i][4].indexOf(msg.content[i]) === -1) {
-						msg.errorreply(`Invalid choice \`${msg.content[i]}\` for \`${cmd.args[i][1]}\`, valid options are:\n\`` + cmd.args[i][4].join("\`, \`") + "\`"); // "
-						return;
+						let match = isnearlist(cmd.args[i][4], msg.content[i], 3);
+						if (match.length === 0) { // nothing near to it
+							msg.errorreply(`Invalid choice \`${msg.content[i]}\` for \`${cmd.args[i][1]}\`, valid options are:\n\`` + cmd.args[i][4].join("\`, \`") + "\`"); // "
+							return;
+						}
+						msg.content[i] = match[0]; // chose nearest match
 					}
 					args.push(msg.content[i]);
 					break;
@@ -493,10 +550,10 @@ client.on("messageCreate", async msg => {
 					args.push(msg.content[i]);
 			}
 		}
-		if (cmd.hide) msg.delete();
+		if (cmd.hide && msg.inGuild()) msg.delete();
 		cmd.func.bind(msg)(args);
 	} else {
-		if (cmd.hide) msg.delete();
+		if (cmd.hide && msg.inGuild()) msg.delete();
 		cmd.func.bind(msg)([]);
 	}
 });

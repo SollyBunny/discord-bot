@@ -172,12 +172,12 @@ module.exports.cmds = {
 									return `<${m[1]}*>`;
 								return `<${m[1]}>`;
 							}).join(" ") + "`",
-							value: client.cmds[i].desc,
+							value: client.cmds[i].desc + (client.cmds[i].admin ? " (admin)" : ""),
 						};
 					} else {
 						return {
 							name: "`" + i + "`",
-							value: client.cmds[i].desc,
+							value: client.cmds[i].desc + (client.cmds[i].admin ? " (admin)" : ""),
 						};
 					}
 				});
@@ -228,6 +228,27 @@ module.exports.cmds = {
 			this.embedreply({
 				title: `Help`,
 				msg: `Did you mean:\n\`${args.join("\`,\`")}\``,
+				color: conf.color
+			});
+		}
+	},
+	"uptime": {
+		desc: "Get uptime of bot",
+		func: async function(args) {
+			let t = process.uptime();
+			if (t >= 604800) // weeks / days
+				t = `${Math.floor(t / 604800)} weeks, ${Math.floor((t % 604800) / 86400)} days`;
+			else if (t >= 86400) // days / hours
+				t = `${Math.floor(t / 86400)} days, ${Math.floor((t % 86400) / 3600)} hours`;
+			else if (t >= 3600) // hours / minutes
+				t = `${Math.floor(t / 3600)} hours, ${Math.floor((t % 3600) / 60)} minutes`;
+			else if (t >= 60) // minutes / seconds
+				t = `${Math.floor(t / 60)} minutes, ${Math.floor(t % 60)} seconds`;
+			else // seconds
+				t = `${Math.floor(t)} seconds`;
+			this.embedreply({
+				title: "Uptime",
+				msg: t,
 				color: conf.color
 			});
 		}

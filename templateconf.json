@@ -6,6 +6,9 @@
 	"goodmorning": [
 		["<daily bully channel>", "<good morning channel>", "<location>"]
 	]
-	"visualcrossingkey": "<visualcrossing key>"
+	"visualcrossingkey": "<visualcrossing key>",
+	"stickers": {
+		"name": "value"
+	}
 }
 
