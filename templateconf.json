@@ -2,13 +2,13 @@
 	"token": "<token>",
 	"prefix": "!",
 	"admins": ["<your id here>"],
-	"color": [10, 20, 30],
+	"color": [7, 6, 8],
 	"goodmorning": [
-		["<daily bully channel>", "<good morning channel>", "<location>"]
+		["<daily bully channel>", "<good morning channel>", "<weather location>"]
 	]
 	"visualcrossingkey": "<visualcrossing key>",
 	"stickers": {
-		"name": "value"
+		"<sticker name>": "<sticker url>"
 	}
 }
 

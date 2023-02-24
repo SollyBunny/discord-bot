@@ -223,8 +223,8 @@ client.once("ready", async () => {
 	});
 	log.info(`Ready as ${client.user.tag}`);
 	let commands = [];
-	Object.keys(client.cmds).forEach(i => {
-		if (client.cmds[i].admin) return;
+	Object.values(client.cmds).forEach(i => {
+		if (i].admin) return;
 		let command = {
 			name: i,
 			description: client.cmds[i].desc,
@@ -401,7 +401,7 @@ client.on("interactionCreate", async itn => {
 			}
 		};
 	}
-	if (cmd.hide && msg.inGuild()) {
+	if (cmd.hide && itn.inGuild()) {
 		itn.reply({ content: "-" }); // allow actuall replies, only hiding the initial "bot is thinking" and subsequent error
 		await itn.deleteReply();
 	};
