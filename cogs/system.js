@@ -28,7 +28,7 @@ function levdis(a, b) {
 function isnearlist(l, v, t) {
 	l = l.map(i => { // work out all levdis from v
 		return [i, levdis(i, v)];
-	});
+ 	});
 	l = l.filter(i => { // remove elements with distance bigger than t
 		return i[1] < t
 	});
