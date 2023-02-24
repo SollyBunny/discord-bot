@@ -224,7 +224,7 @@ client.once("ready", async () => {
 	log.info(`Ready as ${client.user.tag}`);
 	let commands = [];
 	Object.values(client.cmds).forEach(i => {
-		if (i].admin) return;
+		if (i.admin) return;
 		let command = {
 			name: i,
 			description: client.cmds[i].desc,
