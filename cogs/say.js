@@ -193,66 +193,70 @@ module.exports.cmds = {
         }
     },
     "russian": {
-        desc: "Turn latin text into cyrillic text",
+        desc: "Roughly transliterates latin text into cyrillic text",
 		args: [
-			[dc.BIGTEXT, "text", "What to communize", true],
+			[dc.BIGTEXT, "text", "What to transliterate", true],
 		],
 		hide: true,
 		func: async function (args) {
             let out = "";
             for (let l, i = 0; i < args[0].length; ++i) {
                 switch (args[0][i]) {
-					// case 'a': l = 'a'; break;
-					case 'b': l = 'в'; break;
+					//Letters without direct analogues have been left unchanged and marked with //
+					//Lowercase
+					case 'a': l = 'а'; break;
+					case 'b': l = 'б'; break;
+					case 'c': l = 'c'; break; //
 					case 'd': l = 'д'; break;
-					case 'e': l = 'з'; break;
-					// case 'f': l = 'f'; break;
-					case 'g': l = 'g'; break;
-					case 'h': l = 'н'; break;
-					// case 'i': l = 'i'; break;
-					// case 'j': l = 'j'; break;
-					case 'k': l = 'k'; break;
-					case 'l': l = 'l'; break;
-					case 'm': l = 'm'; break;
+					case 'e': l = 'е'; break;
+					case 'f': l = 'ф'; break;
+					case 'g': l = 'г'; break;
+					case 'h': l = 'х'; break;
+					case 'i': l = 'и'; break;
+					case 'j': l = 'j'; break; //
+					case 'k': l = 'к'; break;
+					case 'l': l = 'л'; break;
+					case 'm': l = 'м'; break;
 					case 'n': l = 'n'; break;
-					case 'o': l = 'o'; break;
-					case 'p': l = 'p'; break;
-					case 'q': l = 'q'; break;
-					case 'r': l = 'r'; break;
-					case 's': l = 's'; break;
+					case 'o': l = 'о'; break;
+					case 'p': l = 'п'; break;
+					case 'q': l = 'q'; break; //
+					case 'r': l = 'р'; break;
+					case 's': l = 'с'; break;
 					case 't': l = 'т'; break;
-					case 'u': l = 'u'; break;
-					case 'v': l = 'v'; break;
-					case 'w': l = 'w'; break;
-					case 'x': l = 'x'; break;
-					case 'y': l = 'y'; break;
-					case 'z': l = 'z'; break;
-					case 'A': l = 'A'; break;
-					case 'B': l = 'B'; break;
-					case 'C': l = 'C'; break;
-					case 'D': l = 'D'; break;
-					case 'E': l = 'E'; break;
-					case 'F': l = 'F'; break;
-					case 'G': l = 'G'; break;
-					case 'H': l = 'H'; break;
-					case 'I': l = 'I'; break;
-					case 'J': l = 'J'; break;
-					case 'K': l = 'K'; break;
-					case 'L': l = 'L'; break;
-					case 'M': l = 'M'; break;
-					case 'N': l = 'N'; break;
-					case 'O': l = 'O'; break;
-					case 'P': l = 'P'; break;
-					case 'Q': l = 'Q'; break;
-					case 'R': l = 'R'; break;
-					case 'S': l = 'S'; break;
-					case 'T': l = 'T'; break;
-					case 'U': l = 'U'; break;
-					case 'V': l = 'V'; break;
-					case 'W': l = 'W'; break;
-					case 'X': l = 'X'; break;
-					case 'Y': l = 'Y'; break;
-					case 'Z': l = 'Z'; break;
+					case 'u': l = 'у'; break;
+					case 'v': l = 'в'; break;
+					case 'w': l = 'w'; break; //
+					case 'x': l = 'x'; break; //
+					case 'y': l = 'y'; break; //
+					case 'z': l = 'з'; break;
+					//Uppercase
+					case 'A': l = 'А'; break;
+					case 'B': l = 'Б'; break;
+					case 'C': l = 'C'; break; //
+					case 'D': l = 'Д'; break;
+					case 'E': l = 'Е'; break;
+					case 'F': l = 'Ф'; break;
+					case 'G': l = 'Г'; break;
+					case 'H': l = 'Х'; break;
+					case 'I': l = 'И'; break;
+					case 'J': l = 'J'; break; //
+					case 'K': l = 'К'; break;
+					case 'L': l = 'Л'; break;
+					case 'M': l = 'М'; break;
+					case 'N': l = 'Н'; break;
+					case 'O': l = 'О'; break;
+					case 'P': l = 'П'; break;
+					case 'Q': l = 'Q'; break; //
+					case 'R': l = 'Р'; break;
+					case 'S': l = 'С'; break;
+					case 'T': l = 'Т'; break;
+					case 'U': l = 'У'; break;
+					case 'V': l = 'В'; break;
+					case 'W': l = 'W'; break; //
+					case 'X': l = 'X'; break; //
+					case 'Y': l = 'Y'; break; //
+					case 'Z': l = 'З'; break;
                     default: l = args[0][i];
                 }
                 out += l;
