@@ -1,4 +1,4 @@
-const thegame = "The game, The game 2, The thought, The memory, The thing, The hand, Sus, Among us, I hardly know her, That's what she said, Egad my roast is ruined, Emag, Have you found your micrphone yet? (try looking in the kettle), t minus 7 seconds"
+const thegame = "The game, The game 2, The thought, The memory, The thing, The han(d), The Fan, The Scan, Sus, Among us, I hardly know her, That's what she said, Egad my roast is ruined, Emag, Have you found your micrphone yet? (try looking in the kettle), Me Lon, Le Mon, t minus 7 seconds"
 
 const predict = require("./predict.json");
 const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ !?*(),.#\"\'\n".split("");
@@ -62,7 +62,7 @@ module.exports.cmds = {
 			this.webhookreply(this.member, out);
 		}
 	},
-	"game": {
+	"game": { // NOTE: this is a massive in joke
 		desc: "The Game!!! (and much more)",
 		func: async function (args) {
 			try {
@@ -192,6 +192,84 @@ module.exports.cmds = {
             this.webhookreply(this.member, out);
         }
     },
+    "greek": {
+        desc: "Roughly transliterates latin text into greek text",
+		args: [
+			[dc.BIGTEXT, "text", "What to transliterate", true],
+		],
+		hide: true,
+		func: async function (args) {
+			// TODO replace th & TH with θ
+			// TODO replace ch with χ
+			// TODO replace CH with X
+			// TODO replace ps with ψ
+			// TODO replace PS with Ψ
+			
+            let out = "";
+            for (let l, i = 0; i < args[0].length; ++i) {
+                switch (args[0][i]) {
+					// Letters without direct analogues have been left unchanged and commented out
+					// Lowercase
+					case 'a': l = 'α'; break;
+					case 'b': l = 'β'; break;
+					case 'c': l = 'ς'; break;
+					case 'd': l = 'δ'; break;
+					case 'e': l = 'ε'; break;
+					case 'f': l = 'φ'; break;
+					case 'g': l = 'γ'; break;
+					// case 'h': l = 'h'; break;
+					case 'i': l = 'ι'; break;
+					// case 'j': l = 'j'; break;
+					case 'k': l = 'κ'; break;
+					case 'l': l = 'λ'; break;
+					// case 'm': l = 'm'; break;
+					case 'n': l = 'η'; break;
+					// case 'o': l = 'o'; break;
+					case 'p': l = 'π'; break;
+					// case 'q': l = 'q'; break;
+					case 'r': l = 'ρ'; break;
+					case 's': l = 'σ'; break;
+					case 't': l = 'τ'; break;
+					case 'u': l = 'μ'; break;
+					// case 'v': l = 'v'; break;
+					case 'w': l = 'ω'; break;
+					case 'x': l = 'ξ'; break;
+					// case 'y': l = 'y'; break;
+					case 'z': l = 'ζ'; break;
+					// Uppercase
+					// case 'A': l = 'A'; break;
+					// case 'B': l = 'B'; break;
+					// case 'C': l = 'C'; break;
+					case 'D': l = 'Δ'; break;
+					// case 'E': l = 'Е'; break;
+					case 'F': l = 'Φ'; break;
+					case 'G': l = 'Γ'; break;
+					// case 'H': l = 'H'; break;
+					// case 'I': l = 'I'; break;
+					// case 'J': l = 'J'; break;
+					// case 'K': l = 'K'; break;
+					case 'L': l = 'Λ'; break;
+					// case 'M': l = 'M'; break;
+					// case 'N': l = 'N'; break;
+					case 'O': l = 'Ω'; break;
+					case 'P': l = 'Π'; break;
+					// case 'Q': l = 'Q'; break;
+					// case 'R': l = 'R'; break;
+					case 'S': l = 'Σ'; break;
+					case 'T': l = 'Θ'; break;
+					// case 'U': l = 'U'; break;
+					// case 'V': l = 'V'; break;
+					// case 'W': l = 'W'; break;
+					case 'X': l = 'Ξ'; break;
+					// case 'Y': l = 'Y'; break;
+					// case 'Z': l = 'Z'; break;
+                    default: l = args[0][i];
+                }
+                out += l;
+            }
+            this.webhookreply(this.member, out);
+        }
+    },
     "russian": {
         desc: "Roughly transliterates latin text into cyrillic text",
 		args: [
@@ -231,7 +309,7 @@ module.exports.cmds = {
 					// case 'x': l = 'x'; break;
 					// case 'y': l = 'y'; break;
 					case 'z': l = 'з'; break;
-					//Uppercase
+					// Uppercase
 					case 'A': l = 'А'; break;
 					case 'B': l = 'Б'; break;
 					// case 'C': l = 'C'; break;
@@ -265,6 +343,35 @@ module.exports.cmds = {
             this.webhookreply(this.member, out);
         }
     },
+    "buffalo": { // buffalo is hard to spell
+		desc: "Encodes text in purely buffalos",
+		args: [
+			[dc.BIGTEXT, "text", "What to buffalo", true],
+		],
+		hide: true,
+		func: async function (args) {
+			let out = "";
+			let l;
+			for (let i = 0; i < args[0].length; ++i) {
+				l = args[0].charCodeAt(i);
+				if (l >= 97 && l <= 122) { // between 'a' & 'z'
+					l -= 96; // 'a' - 1
+				} else if (l >= 65 && l <= 90) { // between 'A' & 'Z'
+					l -= 64; // 'A' - 1
+				} else {
+					if (args[0][i] === " ") continue; // spaces make things confusing
+					out = out.slice(0, -2) + args[0][i] + ", ";
+					continue;
+				}
+				out += (
+					("BUFFALO ".repeat(Math.floor(l / 5))) +
+					("buffalo ".repeat(l % 5))
+				).slice(0, -1) + ", ";
+			}
+			out = out.slice(0, -2); // remove tailing ", "
+			this.webhookreply(this.member, out);
+		}
+    },	
     "uwu": {
         desc: "Mirror text",
 		args: [

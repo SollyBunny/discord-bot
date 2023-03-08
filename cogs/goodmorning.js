@@ -122,7 +122,7 @@ function t07() {
 		let date = new Date();
 		let embed = await weathertoday(conf.goodmorninglocation);
 		embed.title = "Good morning";
-		embed.msg = `It is **${days[date.getDay()]}**, the **${date.getDate()}${stndrd(date.getDay())}** of **${months[date.getMonth()]}**, **${date.getFullYear()}**\n\n > ${dailyrandom(quotes)}\n\n` + embed.msg;
+		embed.msg = `It is **${days[date.getDay()]}**, the **${date.getDate()}${stndrd(date.getDate())}** of **${months[date.getMonth()]}**, **${date.getFullYear()}**\n\n > ${dailyrandom(quotes)}\n\n` + embed.msg;
 		embed.url = undefined;
 		i[1].embedreply(embed);
 		i[0].embedreply(dailybully(i[1]));
