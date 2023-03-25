@@ -1,50 +1,12 @@
-/*function hextoarray(hex) {
+/* function hextoarray(hex) {
 	return [
 		parseInt(hex.slice(1, 3), 16),
 		parseInt(hex.slice(3, 5), 16),
 		parseInt(hex.slice(5, 7), 16)
 	];
-}*/
+} */
 function inttoarray(int) {
-	return [
-		int         & 255,
-		(int >> 8 ) & 255,
-		(int >> 16) & 255,
-	];
 }
-
-function levdis(a, b) {
-	// https://en.wikipedia.org/wiki/Levenshtein_distance
-	if (a.length === 0) return b.length;
-	if (b.length === 0) return a.length;
-	if (a[0] == b[0]) return levdis(a.slice(1), b.slice(1));
-	return Math.min(
-		levdis(a.slice(1), b),
-		levdis(a, b.slice(1)),
-		levdis(a.slice(1), b.slice(1))
-	) + 1;
-}
-
-function isnearlist(l, v, t) {
-	l = l.map(i => { // work out all levdis from v
-		return [i, levdis(i, v)];
- 	});
-	l = l.filter(i => { // remove elements with distance bigger than t
-		return i[1] < t
-	});
-	l = l.sort((a, b) => { // sort by levdis
-		return a[1] - b[1];
-	});
-	l = l.map(i => { // remove levdis
-		return i[0];
-	});
-	return l;
-}
-
-const helptext = `A cool bot made by SollyBunny#6656
-Use \`help <page>\` to look at all the different commands
-Use \`help <cmdname>\` to look at help for a specific command (also works as a search)
-Haz fun!`
 
 module.exports.cmds = {
 	"avatar": {
@@ -57,7 +19,7 @@ module.exports.cmds = {
 			this.embedreply({
 				title: "Avatar",
 				image: args.displayAvatarURL({ dynamic: true }),
-				color: args.displayColor === 0 ? [255, 255, 255] : inttoarray(args.displayColor)
+				color: args.displayColor === 0 ? [255, 255, 255] : util.rgbtoarr(args.displayColor)
 			});
 		}
 	},
@@ -70,7 +32,7 @@ module.exports.cmds = {
 			args = args[0] || this.member;
 			let embed = {
 				image: args.displayAvatarURL({ dynamic: true }),
-				color: args.displayColor === 0 ? [255, 255, 255] : inttoarray(args.displayColor),
+				color: args.displayColor === 0 ? [255, 255, 255] : util.rgbtoarr(args.displayColor),
 				fields: [
 					{
 						name: "ID",
@@ -149,7 +111,7 @@ module.exports.cmds = {
 				this.embedreply({
 					title: "Help",
 					msg: helptext,
-					color: conf.color
+					color: conf.main.color
 				});
 				return;
 			}
@@ -184,7 +146,7 @@ module.exports.cmds = {
 				this.embedreply({
 					title: `Help (page ${args})`,
 					fields: data,
-					color: conf.color
+					color: conf.main.color
 				});
 				return;
 			}
@@ -205,13 +167,13 @@ module.exports.cmds = {
 								value: value
 							};
 						}),
-						color: conf.color
+						color: conf.main.color
 					});
 				} else {
 					this.embedreply({
 						title: args[0][0].toUpperCase() + args[0].slice(1),
 						msg: msg,
-						color: conf.color
+						color: conf.main.color
 					});
 				}
 				return;
@@ -228,7 +190,7 @@ module.exports.cmds = {
 			this.embedreply({
 				title: `Help`,
 				msg: `Did you mean:\n\`${args.join("\`,\`")}\``,
-				color: conf.color
+				color: conf.main.color
 			});
 		}
 	},
@@ -249,7 +211,7 @@ module.exports.cmds = {
 			this.embedreply({
 				title: "Uptime",
 				msg: t,
-				color: conf.color
+				color: conf.main.color
 			});
 		}
 	}

@@ -9,11 +9,11 @@ module.exports.cmds = {
 			throw Error(args[0] || "Crash Command");
 		}
 	},
-	"doevents": {
-		desc: "Activate all events",
+	"restart": {
+		desc: "Restart the bot",
 		admin: true,
 		func: async function (args) {
-			this.reply("hi")
+			process.exit(0);
 		}
 	},
 	"immortal": {

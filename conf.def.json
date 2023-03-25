@@ -1,0 +1,24 @@
+{
+	"main": {
+		"token": "<token>",
+		"prefix": "!",
+		"admins": ["<your id here>"],
+		"color": [255, 255, 0],
+		"help": "Default help text"
+	},
+	"goodmorning": {
+		"visualcrossingkey": "<visualcrossing key>",
+		"dailybully": [
+			"<channel>"
+		],
+		"goodmorning": [
+			"<channel>"
+		],
+		"weather": [
+			"<channel>"
+		]
+	},
+	"stickers": {
+		"<sticker name>": "<sticker url>"
+	}
+}

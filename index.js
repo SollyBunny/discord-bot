@@ -1,20 +1,48 @@
 #!/usr/bin/env node
 
-function levdis(a, b) {
+// Config
+
+global.conf = require("./conf.json");
+
+// Log
+
+global.log = (m) => {
+	log.raw("D", 34, m);
+};
+log.raw = (t, c, m) => {
+	console.log(`\x1b[${c}m${t}:\x1b[0m ${m}`);
+}
+log.info = (m) => {
+	log.raw("I", 36, m);
+};
+log.warn = (m) => {
+	log.raw("W", 33, m);
+};
+log.error = (m) => {
+	log.raw("E", 31, m);
+};
+
+// Util
+
+global.util = {};
+
+// Get the levenhtein distance between two strings
+util.levdis = (a, b) => {
 	// https://en.wikipedia.org/wiki/Levenshtein_distance
 	if (a.length === 0) return b.length;
 	if (b.length === 0) return a.length;
-	if (a[0] == b[0]) return levdis(a.slice(1), b.slice(1));
+	if (a[0] == b[0]) return util.levdis(a.slice(1), b.slice(1));
 	return Math.min(
-		levdis(a.slice(1), b),
-		levdis(a, b.slice(1)),
-		levdis(a.slice(1), b.slice(1))
+		util.levdis(a.slice(1), b),
+		util.levdis(a, b.slice(1)),
+		util.levdis(a.slice(1), b.slice(1))
 	) + 1;
-}
+};
 
-function isnearlist(l, v, t) {
+// Sort a list by lev distance to a string (v), where entries further than t away are removed
+util.levdissort = (l, v, t) => {
 	l = l.map(i => { // work out all levdis from v
-		return [i, levdis(i, v)];
+		return [i, util.levdis(i, v)];
 	});
 	l = l.filter(i => { // remove elements with distance bigger than t
 		return i[1] < t
@@ -26,55 +54,19 @@ function isnearlist(l, v, t) {
 		return i[0];
 	});
 	return l;
-}
+};
 
-global.conf = require("./conf.json");
-global.http = require("https");
-global.fs   = require("fs");
-global.dc   = require("discord.js");
+// Convert a number in the rgb format to an array of its rgb values
+util.rgbtoarr = (n) => {
+	return [
+		n         & 255,
+		(n >> 8 ) & 255,
+		(n >> 16),
+	];
+};
 
-dc.TEXT    = 0;
-dc.BIGTEXT = 1;
-dc.INT     = 2;
-dc.NUM     = 3;
-dc.USER    = 4;
-dc.ROLE    = 5;
-dc.BOOL    = 6;
-dc.CHOICE  = 7;
-dc.typename = (n) => {
-	switch (n) {
-		case 0:
-			return "Text";
-		case 1:
-			return "Text+";
-		case 2:
-			return "Integer";
-		case 3:
-			return "Number";
-		case 4:
-			return "User";
-		case 5:
-			return "Role";
-		case 6:
-			return "Boolean";
-		case 7:
-			return "Choice";
-	}
-}
-
-global.log = (m) => {
-	console.log(`\x1b[34mD:\x1b[0m ${m}`)	
-};
-log.info = (m) => {
-	console.log(`\x1b[36mI:\x1b[0m ${m}`)
-};
-log.warn = (m) => {
-	console.log(`\x1b[33mW:\x1b[0m ${m}`)
-};
-log.error = (m) => {
-	console.log(`\x1b[31mE:\x1b[0m ${m}`)
-};
-global.ffetch = async function(url) {
+// A fetch function using http (usefull when fetch refuses to work and when fetch isn't available)
+util.fetch = async function(url) {
 	return new Promise((resolve, reject) => {
 		http.get(url, res => {
 			if (res.statusCode !== 200) {
@@ -91,9 +83,39 @@ global.ffetch = async function(url) {
 			reject(e);
 		});
 	});
+};
+
+// Modules
+
+global.http = require("https");
+global.fs   = require("fs");
+global.dc   = require("discord.js");
+
+dc.TEXT    = 0;
+dc.BIGTEXT = 1;
+dc.INT     = 2;
+dc.NUM     = 3;
+dc.USER    = 4;
+dc.ROLE    = 5;
+dc.BOOL    = 6;
+dc.CHOICE  = 7;
+dc.typename = (n) => { // TODO use a dictionary
+	switch (n) {
+		case 0: return "Text";
+		case 1: return "Text+";
+		case 2: return "Integer";
+		case 3: return "Number";
+		case 4: return "User";
+		case 5: return "Role";
+		case 6: return "Boolean";
+		case 7: return "Choice";
+	}
 }
 
+// Client
+
 global.client = new dc.Client({
+	// Add all intents / partials, because if they're not available nothing happens, and you never know when you'll need em
 	intents: [ 
 		dc.IntentsBitField.Flags.AutoModerationConfiguration,
 		dc.IntentsBitField.Flags.AutoModerationExecution,
@@ -126,10 +148,12 @@ global.client = new dc.Client({
 	]
 });
 
+// Cogs
 client.cmds = {};
 client.cogs = [];
 client.cogs.load = (name) => {
-	let cog = require(`./cogs/${name}`);
+	client.cogs.push(name);
+	let cog = require(`./cogs/${name}`); // TODO make this configurable
 	if (cog.cmds) {
 		Object.keys(cog.cmds).forEach(i => {
 			client.cmds[i] = cog.cmds[i];
@@ -141,80 +165,6 @@ fs.readdirSync("./cogs/").forEach(i => {
 	client.cogs.load(i);
 });
 
-/* new dc.SlashCommandBuilder().setName("a").addStringOption(o=>{return o}).addIntegerOption(o=>{return o}).addNumberOption(o=>{return o}).addUserOption(o=>{return o}).addRoleOption(o=>{return o}).addChannelOption(o=>{return o})
-SlashCommandBuilder {
-  options: [
-    SlashCommandStringOption {
-      choices: undefined,
-      autocomplete: undefined,
-      type: 3,
-      name: undefined,
-      name_localizations: undefined,
-      description: undefined,
-      description_localizations: undefined,
-      required: false,
-      max_length: undefined,
-      min_length: undefined
-    },
-    SlashCommandIntegerOption {
-      max_value: undefined,
-      min_value: undefined,
-      choices: undefined,
-      autocomplete: undefined,
-      type: 4,
-      name: undefined,
-      name_localizations: undefined,
-      description: undefined,
-      description_localizations: undefined,
-      required: false
-    },
-    SlashCommandNumberOption {
-      max_value: undefined,
-      min_value: undefined,
-      choices: undefined,
-      autocomplete: undefined,
-      type: 10,
-      name: undefined,
-      name_localizations: undefined,
-      description: undefined,
-      description_localizations: undefined,
-      required: false
-    },
-    SlashCommandUserOption {
-      name: undefined,
-      name_localizations: undefined,
-      description: undefined,
-      description_localizations: undefined,
-      required: false,
-      type: 6
-    },
-    SlashCommandRoleOption {
-      name: undefined,
-      name_localizations: undefined,
-      description: undefined,
-      description_localizations: undefined,
-      required: false,
-      type: 8
-    },
-    SlashCommandChannelOption {
-      channel_types: undefined,
-      name: undefined,
-      name_localizations: undefined,
-      description: undefined,
-      description_localizations: undefined,
-      required: false,
-      type: 7
-    }
-  ],
-  name: 'a',
-  name_localizations: undefined,
-  description: undefined,
-  description_localizations: undefined,
-  default_permission: undefined,
-  default_member_permissions: undefined,
-  dm_permission: undefined
-}
-*/
 client.once("ready", async () => {
 	client.user.setPresence({
 		activities: [{
@@ -271,6 +221,11 @@ client.once("ready", async () => {
 						arg.min_value = i[4] && String(i[4]);
 						arg.max_value = i[5] && String(i[5]);
 						break;
+					case dc.NUM:
+						arg.type = 10;
+						arg.min_value = i[4] && String(i[4]);
+						arg.max_value = i[5] && String(i[5]);
+						break;
 				}
 				command.options.push(arg);
 			});
@@ -284,29 +239,6 @@ client.once("ready", async () => {
 	log.info(`Commands pushed`);
 });
 
-/*
-EmbedBuilder {
-  data: {
-    color: 39423,
-    title: 'Some title',
-    url: 'https://discord.js.org/',
-    author: {
-      name: 'Some name',
-      url: 'https://discord.js.org',
-      icon_url: 'https://i.imgur.com/AfFp7pu.png'
-    },
-    description: 'Some description here',
-    thumbnail: { url: 'https://i.imgur.com/AfFp7pu.png' },
-    fields: [ [Object], [Object], [Object], [Object], [Object] ],
-    image: { url: 'https://i.imgur.com/AfFp7pu.png' },
-    timestamp: '2022-11-12T22:18:17.932Z',
-    footer: {
-      text: 'Some footer text here',
-      icon_url: 'https://i.imgur.com/AfFp7pu.png'
-    }
-  }
-}
-*/
 client._embedreply = async function({
 	msg    = "",
 	title  = undefined,
@@ -368,11 +300,9 @@ client.on("interactionCreate", async itn => {
 	let cmd = client.cmds[itn.commandName];
 	itn.embedreply = client._embedreply;
 	itn.errorreply = client._errorreply;
-	if (!cmd) { // just in case
-		this.errorreply("No command found");
+	if (!cmd) // just in case
 		return;
-	}
-	log.info(`cmd ${itn.user.tag}: ${itn.commandName}`);
+	log.info(`slashcmd ${itn.user.tag}: ${itn.commandName}`);
 	itn.webhookreply = client._webhookreply;
 	let args = [];
 	if (cmd.args) {
@@ -380,10 +310,10 @@ client.on("interactionCreate", async itn => {
 			let opt = itn.options.get(cmd.args[i][1]);
 			if (opt) {
 				switch (opt.type) {
-					case 6: // dc.USER:
+					case dc.USER:
 						opt = opt.member || opt.user;
 						break;
-					default: // dc.TEXT,dc.BIGTEXT,dc.CHOICE (3)
+					default: // everything else
 						opt = opt.value;
 						break;
 				}
@@ -420,7 +350,7 @@ client.on("messageCreate", async msg => {
 		client.cmds["help"].func.bind(msg)([]);
 		return;
 	}
-	if (msg.content[0] !== conf.prefix) return;
+	if (msg.content[0] !== conf.main.prefix) return;
 	let index = msg.content.indexOf(" ");
 	let cmd;
 	if (index === -1) {
@@ -431,20 +361,17 @@ client.on("messageCreate", async msg => {
 		msg.content = msg.content.slice(index + 1);
 	}
 	cmd = cmd.toLowerCase();
-	if (!/[a-z]/.test(cmd)) return; // a command with non a-z characters is probably invalid, just ignore it (so strings like ._. don't activate)
 	log.info(`cmd ${msg.author.tag}: ${cmd} ${msg.content}`);
 	if (client.cmds[cmd]) {
 		cmd = client.cmds[cmd];
 	} else { // use fuzzy match
-		let match = isnearlist(Object.keys(client.cmds), cmd, 3);
-		if (match.length === 0) { // nothing near to it
-			msg.errorreply("No command found");
+		let match = util.isnearlist(Object.keys(client.cmds), cmd, 3);
+		if (match.length === 0) // nothing near to it
 			return;
-		}
 		cmd = client.cmds[match[0]]; // chose nearest match
 	}
 
-	if (conf.admins.indexOf(msg.author.id) === -1) {
+	if (conf.main.admins.indexOf(msg.author.id) === -1) {
 		if (cmd.admin) {
 			msg.errorreply("You need to be bot admin to use this command");
 			return;
@@ -520,13 +447,11 @@ client.on("messageCreate", async msg => {
 					args.push(msg.content[i]);
 					break;
 				case dc.INT:
+					msg.content[i] = Math.round(msg.content[i]);
+				case dc.NUM:
 					msg.content[i] = Number(msg.content[i]);
 					if (isNaN(msg.content[i])) {
 						msg.errorreply(`Invalid integer for \`${cmd.args[i][1]}\``);
-						return;
-					}
-					if (msg.content[i] % 1 !== 0) {
-						msg.errorreply(`Invalid integer (whole number) for \`${cmd.args[i][1]}\``);
 						return;
 					}
 					if (
@@ -558,7 +483,9 @@ client.on("messageCreate", async msg => {
 	}
 });
 
-client.login(conf.token);
+client.login(conf.main.token);
+
+// Error handling
 
 let currentmsg;
 process.on("uncaughtException", e => {
@@ -584,4 +511,4 @@ process.on("uncaughtException", e => {
 		title: "Error",
 		msg: `\`\`\`${e}: ${e.stack}\`\`\``
 	});
-})
+});

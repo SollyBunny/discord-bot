@@ -5,7 +5,7 @@ const quotes = require("./goodmorning.json");
 let channel = [];
 let dailyrandomseed = Math.floor(Math.random() * 100000);
 
-const days = [
+const days = conf.goodmorning.days || [
 	"Sunday",
 	"Monday",
 	"Tuesday",
@@ -14,7 +14,7 @@ const days = [
 	"Friday",
 	"Saturday"
 ];
-const months = [
+const months = conf.goodmorning.months || [
 	"January",
 	"Febuary",
 	"March",
@@ -131,7 +131,7 @@ function t07() {
 function t2222() {
 	channel.forEach(i => {
 		i[1].send({ content: "22:22!" });
-	})
+	});
 }
 
 client.once("ready", async function() {
