@@ -1,3 +1,11 @@
+/* voice.js
+A music bot!
+
+Requires:
+@discordjs/voice
+ytdl-core
+*/
+
 const voice = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
 

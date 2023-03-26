@@ -1,104 +1,24 @@
-/* function hextoarray(hex) {
-	return [
-		parseInt(hex.slice(1, 3), 16),
-		parseInt(hex.slice(3, 5), 16),
-		parseInt(hex.slice(5, 7), 16)
-	];
-} */
-function inttoarray(int) {
+/* system.js
+Interal bot commands which can't be put into the main program
+
+Config:
+"system": {
+	"color": [r, g, b],
+	"helptext": "<something helpfull>"
 }
+*/
+
+if (conf.system.helptext)
+	conf.system.helptext = conf.system.helptext.replaceAll("$prefix", conf.main.prefix);
+else 
+	conf.system.helptext = "No help text set!";
 
 module.exports.cmds = {
-	"avatar": {
-		desc: "Show someone's profile picture",
-		args: [
-			[dc.USER, "user", "Who's profile picture", false],
-		],
+	"restart": {
+		desc: "Restart the bot",
+		admin: true,
 		func: async function (args) {
-			args = args[0] || this.member;
-			this.embedreply({
-				title: "Avatar",
-				image: args.displayAvatarURL({ dynamic: true }),
-				color: args.displayColor === 0 ? [255, 255, 255] : util.rgbtoarr(args.displayColor)
-			});
-		}
-	},
-	"profile": {
-		desc: "Show someone's profile",
-		args: [
-			[dc.USER, "user", "Who's profile", false],
-		],
-		func: async function (args) {
-			args = args[0] || this.member;
-			let embed = {
-				image: args.displayAvatarURL({ dynamic: true }),
-				color: args.displayColor === 0 ? [255, 255, 255] : util.rgbtoarr(args.displayColor),
-				fields: [
-					{
-						name: "ID",
-						value: `\`${args.id}\``,
-						inline: true
-					}, {
-						name: "Created",
-						value: args.user.createdAt.toString(),
-						inline: true
-					}
-				]
-			};
-			if (args.user) { // in guild
-				embed.fields.push({
-					name: "Joined",
-					value: args.joinedAt.toString(),
-					inline: true
-				});
-				if (args._roles.length > 0) {
-					embed.fields.push({
-						name: "Roles",
-						value: args._roles.map(i => {
-							return `<@&${i}>`;
-						}).join(" "),
-						inline: true
-					});
-				}
-			}
-			if (args.nickname) {
-				embed.title = `${args.nickname} (${args.tag || args.user.tag})`;
-			} else {
-				embed.title = args.tag || args.user.tag;
-			}
-			this.embedreply(embed);
-		}
-	},
-	"purge": {
-		desc: "Delete multiple messages",
-		args: [
-			[dc.INT, "messages", "Number of messages to purge", true, 1, 99],
-		],
-		perm: dc.PermissionFlagsBits.ManageMessages,
-		dm: false,
-		func: async function (args) {
-			try {
-				await this.channel.bulkDelete(args[0] + 1)
-			} catch {
-				this.errorreply("Purge failed");
-			}
-		}
-	},
-	"perms": {
-		desc: "Get perms of a user",
-		args: [
-			[dc.USER, "user", "Who's perms", false],
-		],
-		dm: false,
-		func: async function (args) {
-			args = args[0] || this.member;
-			let perms = args.permissions.serialize();
-			this.embedreply({
-				msg: Object.keys(perms).map(i => {
-					return `${i}: ${perms[i]}`
-				}).join("\n"),
-				color: (255, 128, 0)
-			});
+			process.exit(0);
 		}
 	},
 	"help": {
@@ -110,8 +30,8 @@ module.exports.cmds = {
 			if (!args[0]) {
 				this.embedreply({
 					title: "Help",
-					msg: helptext,
-					color: conf.main.color
+					msg: conf.system.helptext,
+					color: conf.system.color
 				});
 				return;
 			}
@@ -146,7 +66,7 @@ module.exports.cmds = {
 				this.embedreply({
 					title: `Help (page ${args})`,
 					fields: data,
-					color: conf.main.color
+					color: conf.system.color
 				});
 				return;
 			}
@@ -167,13 +87,13 @@ module.exports.cmds = {
 								value: value
 							};
 						}),
-						color: conf.main.color
+						color: conf.system.color
 					});
 				} else {
 					this.embedreply({
 						title: args[0][0].toUpperCase() + args[0].slice(1),
 						msg: msg,
-						color: conf.main.color
+						color: conf.system.color
 					});
 				}
 				return;
@@ -190,7 +110,7 @@ module.exports.cmds = {
 			this.embedreply({
 				title: `Help`,
 				msg: `Did you mean:\n\`${args.join("\`,\`")}\``,
-				color: conf.main.color
+				color: conf.system.color
 			});
 		}
 	},
@@ -211,8 +131,23 @@ module.exports.cmds = {
 			this.embedreply({
 				title: "Uptime",
 				msg: t,
-				color: conf.main.color
+				color: conf.system.color
 			});
+		}
+	},
+	"purge": {
+		desc: "Delete multiple messages",
+		args: [
+			[dc.INT, "messages", "Number of messages to purge", true, 1, 99],
+		],
+		perm: dc.PermissionFlagsBits.ManageMessages,
+		dm: false,
+		func: async function (args) {
+			try {
+				await this.channel.bulkDelete(args[0] + 1)
+			} catch {
+				this.errorreply("Purge failed");
+			}
 		}
 	}
 };

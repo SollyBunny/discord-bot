@@ -1,9 +1,5 @@
 #!/usr/bin/env node
 
-// Config
-
-global.conf = require("./conf.json");
-
 // Log
 
 global.log = (m) => {
@@ -21,6 +17,18 @@ log.warn = (m) => {
 log.error = (m) => {
 	log.raw("E", 31, m);
 };
+
+
+// Config
+
+global.conf = require("./conf.json");
+if (!conf.main.token) {
+	log.error("I need a token please!");
+	process.exit(1);
+}
+conf.main.prefix = conf.main.prefix || "!";
+conf.main.admins = conf.main.admins || [];
+conf.main.errcolor = conf.main.errcolor || [255, 0, 0]
 
 // Util
 
@@ -159,6 +167,8 @@ client.cogs.load = (name) => {
 			client.cmds[i] = cog.cmds[i];
 		});
 	}
+	if (!conf[name])
+		conf[name] = {};
 	log.info(`Loaded cog ${name}`);
 }
 fs.readdirSync("./cogs/").forEach(i => {
@@ -273,7 +283,7 @@ client._errorreply = async function(msg) {
 	await this.embedreply({
 		msg: msg,
 		title: "Error",
-		color: [255, 0, 0],
+		color: conf.main.errcolor,
 	});
 }
 
@@ -365,7 +375,7 @@ client.on("messageCreate", async msg => {
 	if (client.cmds[cmd]) {
 		cmd = client.cmds[cmd];
 	} else { // use fuzzy match
-		let match = util.isnearlist(Object.keys(client.cmds), cmd, 3);
+		let match = util.levdissort(Object.keys(client.cmds), cmd, 3);
 		if (match.length === 0) // nothing near to it
 			return;
 		cmd = client.cmds[match[0]]; // chose nearest match
@@ -437,7 +447,7 @@ client.on("messageCreate", async msg => {
 				case dc.CHOICE:
 					msg.content[i] = msg.content[i].toLowerCase();
 					if (cmd.args[i][4].indexOf(msg.content[i]) === -1) {
-						let match = isnearlist(cmd.args[i][4], msg.content[i], 3);
+						let match = util.levdissort(cmd.args[i][4], msg.content[i], 3);
 						if (match.length === 0) { // nothing near to it
 							msg.errorreply(`Invalid choice \`${msg.content[i]}\` for \`${cmd.args[i][1]}\`, valid options are:\n\`` + cmd.args[i][4].join("\`, \`") + "\`"); // "
 							return;

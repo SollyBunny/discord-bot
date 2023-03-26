@@ -1,3 +1,7 @@
+/* info.js
+Fetches stuff from the interwebs
+*/
+
 const nekosopts = ["neko", "smug", "woof", "8ball", "goose", "cuddle", "avatar", "slap", "pat", "gecg", "feed", "fox_girl", "lizard", "hug", "meow", "kiss", "wallpaper", "tickle", "waifu", "ngif", "lewd"];
 const nekosurl  = "https://nekos.life/api/v2/img/"
 const wikiurl1 = "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageprops&ppprop=disambiguation&generator=search&gsrinterwiki=1&gsrsearch=";
@@ -17,7 +21,7 @@ module.exports.cmds = {
 				this.errorreply(`Invalid option "${args}", valid options are:\n\`` + nekosopts.join("\`, \`") + "\`") // "
 				return;
 			}
-			let data = await ffetch(`${nekosurl}${args}`);
+			let data = await util.fetch(`${nekosurl}${args}`);
 			data = data.slice(8, -3);
 			args = args.charAt(0).toUpperCase() + args.slice(1).toLowerCase();
 			this.embedreply({
@@ -36,7 +40,7 @@ module.exports.cmds = {
 			let out = [];
 			let data;
 			// fetch initial wiki page(s)
-			data = await ffetch(`${wikiurl1}${args[0]}`);
+			data = await util.fetch(`${wikiurl1}${args[0]}`);
 			data = JSON.parse(data);
 			if (data.query === undefined || data.query.pages.length === 0) { // no query, no pages
 				this.errorreply(`No pages found for "${args[0]}"`);
@@ -65,7 +69,7 @@ module.exports.cmds = {
 					color: [255, 255, 255]
 				});
 			} else {
-				data = await ffetch(`${wikiurl2}${out.pageid}`) // get content of "main" page
+				data = await util.fetch(`${wikiurl2}${out.pageid}`) // get content of "main" page
 				data = JSON.parse(data).query.pages[String(out.pageid)]; // get data from responce
 				extract += "\n" + data.extract;
 				this.embedreply({ // off we go

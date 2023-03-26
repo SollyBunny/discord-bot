@@ -55,8 +55,13 @@ Here are some functions!
 Cogs can be found in `./cogs/*.js`, this is the format of a cog  
 ```js
 /* cogname.js
-	What I do,
-	any confifg I need
+<what I does>
+# Config
+"cogname": {
+	"name": <value>
+}
+# Dependencies
+nop: provide an actuall reason for this library to exist, I'm serious go onto npm, search nop, and tell me why this exists and why 42 other libraries depend on LITERALLY NOTHING whilst having FIVE THOUSAND, THREE HUNDRED AND FORTY SIX WEEKLY DOWNLODS. LIKE I CAN WRITE THIS CODE RIGHT HERE RIGHT NOW, 3, 2, 1, function nop(){}, wow i DID IT AAAAGH
 */
 
 module.exports.cmds = {
@@ -125,7 +130,7 @@ Don't be scared! look at this example instead
 ```js
 await this.embed({
 	"title": "Hello World",
-	msg: "I'm a bot!"
+	"msg": "I'm a bot!"
 });
 ```
 See? ez.

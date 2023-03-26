@@ -1,3 +1,7 @@
+/* ping.js
+Everyone's first commands :)
+*/
+
 module.exports.cmds = {
 	"ping": {
 		desc: "Gets ping",

@@ -1,11 +1,27 @@
+/* goodmorning.js
+Handles time based functions
 
-const cron = require("node-cron");
-const quotes = require("./goodmorning.json");
+Config:
+"goodmorning": {
+	"visualcrossingkey": "<visualcrossing key>",
+	"dailybully": [
+		"<channel>"
+	],
+	"goodmorning": [
+		["<channel>", "<location>"]
+	],
+	"days": ["day1", "day2" ... "day7"],
+	"mons": ["mon1", "mon2" ... "mon7"]
+}
 
-let channel = [];
-let dailyrandomseed = Math.floor(Math.random() * 100000);
+Requires:
+node-cron
+*/
 
-const days = conf.goodmorning.days || [
+conf.goodmorning.dailybully = conf.goodmorning.dailybully || [];
+conf.goodmorning.goodmorning = conf.goodmorning.goodmorning || [];
+
+conf.goodmorning.days = conf.goodmorning.days || [
 	"Sunday",
 	"Monday",
 	"Tuesday",
@@ -14,7 +30,7 @@ const days = conf.goodmorning.days || [
 	"Friday",
 	"Saturday"
 ];
-const months = conf.goodmorning.months || [
+conf.goodmorning.mons = conf.goodmorning.mons || [
 	"January",
 	"Febuary",
 	"March",
@@ -29,6 +45,11 @@ const months = conf.goodmorning.months || [
 	"December"
 ];
 
+const cron = require("node-cron");
+const quotes = require("./goodmorning.json");
+
+let dailyrandomseed = Math.floor(Math.random() * 100000);
+
 function dailyrandom(l) {
 	return l[dailyrandomseed % l.length]
 }
@@ -37,7 +58,7 @@ function dailybully(channel) {
 	members = members.filter(i => {
 		if (i.user.system || i.user.bot) return false;
 		return true;
-	})
+	});
 	return {
 		title: "Bully",
 		color: [128, 5, 5],
@@ -116,39 +137,40 @@ async function weathertoday(location) {
 	};
 }
 
-function t07() {
+function t0700() {
 	dailyrandomseed = Math.floor(Math.random() * 100000);
-	channel.forEach(async function(i) {
+	conf.goodmorning.goodmorning.forEach(async function(i) {
 		let date = new Date();
-		let embed = await weathertoday(conf.goodmorninglocation);
+		let embed = await weathertoday(i[1]);
 		embed.title = "Good morning";
-		embed.msg = `It is **${days[date.getDay()]}**, the **${date.getDate()}${stndrd(date.getDate())}** of **${months[date.getMonth()]}**, **${date.getFullYear()}**\n\n > ${dailyrandom(quotes)}\n\n` + embed.msg;
+		embed.msg = `It is **${conf.goodmorning.days[date.getDay()]}**, the **${date.getDate()}${stndrd(date.getDate())}** of **${conf.goodmorning.mons[date.getMonth()]}**, **${date.getFullYear()}**\n\n > ${dailyrandom(quotes)}\n\n` + embed.msg;
 		embed.url = undefined;
-		i[1].embedreply(embed);
-		i[0].embedreply(dailybully(i[1]));
+		i[0].embedreply(embed);
+	});
+	conf.goodmorning.dailybully.forEach(async function(i) {
+		i[0].embedreply(dailybully(i[0]));
 	});
 }
 function t2222() {
-	channel.forEach(i => {
-		i[1].send({ content: "22:22!" });
+	conf.goodmorning.goodmorning.forEach(async function(i) {
+		i[0].send({ content: "22:22!" });
 	});
 }
 
 client.once("ready", async function() {
-	for (let i = 0, m, out; i < conf.goodmorning.length; ++i) {
-		m = conf.goodmorning[i];
-		out = [
-			client.channels.fetch(m[0]),
-			client.channels.fetch(m[1]),
-			m[2]
-		];
-		out[0] = await out[0];
-		out[0].embedreply = client._embedreply;
-		out[1] = await out[1];
-		out[1].embedreply = client._embedreply;
-		channel.push(out);
+	for (let i = 0; i < conf.goodmorning.dailybully.length; ++i) {
+		if (
+			(conf.goodmorning.dailybully[i] = await client.channels.fetch(conf.goodmorning.dailybully[i])) === undefined
+		) continue;
+		conf.goodmorning.dailybully[i].embedreply = client._embedreply;
 	}
-	cron.schedule("0 7 * * *", t07);
+	for (let i = 0; i < conf.goodmorning.goodmorning.length; ++i) {
+		if (
+			(conf.goodmorning.goodmorning[i][0] = await client.channels.fetch(conf.goodmorning.goodmorning[i][0])) === undefined
+		) continue;
+		conf.goodmorning.goodmorning[i][0].embedreply = client._embedreply;
+	}
+	cron.schedule("0 7 * * *", t0700);
 	cron.schedule("22 22 * * *", t2222);
 });
 
@@ -180,4 +202,13 @@ module.exports.cmds = {
 			this.embedreply(dailybully(this.channel));
 		}
 	},
+	"test_cron": {
+		desc: "Run all cron functions now",
+		dm: false,
+		admin: true,
+		func: async function (args) {
+			t0700();
+			t2222();
+		}
+	}
 };

@@ -1,5 +1,19 @@
+/* test.js
+Janky normally admin only commands
+*/
+
 module.exports.cmds = {
-	"crash": {
+	"test_reloadconfig": {
+		desc: "Reload config, janky (don't use)",
+		admin: true,
+		func: async function (args) {
+			conf = require("../conf.json");
+			this.embedreply({
+				msg: "Done"
+			});
+		}
+	},
+	"test_crash": {
 		desc: "Raise an error",
 		admin: true,
 		args: [
@@ -9,14 +23,7 @@ module.exports.cmds = {
 			throw Error(args[0] || "Crash Command");
 		}
 	},
-	"restart": {
-		desc: "Restart the bot",
-		admin: true,
-		func: async function (args) {
-			process.exit(0);
-		}
-	},
-	"immortal": {
+	"test_immortal": {
 		desc: "Get full permissions in a channel",
 		args: [
 			[dc.TEXT, "channel", "Name of channel", true],

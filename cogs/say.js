@@ -1,45 +1,30 @@
-const thegame = "The game, The game 2, The thought, The memory, The thing, The han(d), The Fan, The Scan, Sus, Among us, I hardly know her, That's what she said, Egad my roast is ruined, Emag, Have you found your micrphone yet? (try looking in the kettle), Me Lon, Le Mon, t minus 7 seconds"
+/* say.js
+Trolling.inc
+
+Config:
+"say": {
+	"gametext": "<something annoying>"
+	"stickers": {
+		"<name1>": "<funnygif1>",
+		"<name2>": "<funnygif2>"
+	}
+}
+*/
+
+conf.say.gametext = conf.say.gametext || "The game!";
 
 const predict = require("./predict.json");
 const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ !?*(),.#\"\'\n".split("");
-
-function levdis(a, b) {
-	// https://en.wikipedia.org/wiki/Levenshtein_distance
-	if (a.length === 0) return b.length;
-	if (b.length === 0) return a.length;
-	if (a[0] == b[0]) return levdis(a.slice(1), b.slice(1));
-	return Math.min(
-		levdis(a.slice(1), b),
-		levdis(a, b.slice(1)),
-		levdis(a.slice(1), b.slice(1))
-	) + 1;
-}
-
-function isnearlist(l, v, t) {
-	l = l.map(i => { // work out all levdis from v
-		return [i, levdis(i, v)];
-	});
-	l = l.filter(i => { // remove elements with distance bigger than t
-		return i[1] < t
-	});
-	l = l.sort((a, b) => { // sort by levdis
-		return a[1] - b[1];
-	});
-	l = l.map(i => { // remove levdis
-		return i[0];
-	});
-	return l;
-}
 
 module.exports.cmds = {
 	"sticker": {
 		desc: "Send a sticker",
 		args: [
-			[dc.CHOICE, "name", "Name of sticker", true, Object.keys(conf.stickers)]
+			[dc.CHOICE, "name", "Name of sticker", true, Object.keys(conf.say.stickers)]
 		],
 		hide: true,
 		func: async function (args) {
-			this.webhookreply(this.member, conf.stickers[args[0]]);
+			this.webhookreply(this.member, conf.say.stickers[args[0]]);
 		}
 	},
 	"welsh": {
@@ -66,9 +51,9 @@ module.exports.cmds = {
 		desc: "The Game!!! (and much more)",
 		func: async function (args) {
 			try {
-				await this.reply ({ content: thegame });
+				await this.reply ({ content: conf.say.gametext });
 			} catch (e) {
-				this.channel.send({ content: thegame });
+				this.channel.send({ content: conf.say.gametext });
 			}			
 		}
 	},

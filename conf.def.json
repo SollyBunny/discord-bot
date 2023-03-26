@@ -2,9 +2,11 @@
 	"main": {
 		"token": "<token>",
 		"prefix": "!",
-		"admins": ["<your id here>"],
-		"color": [255, 255, 0],
-		"help": "Default help text"
+		"admins": ["<your id here>"]
+	},
+	"system": {
+		"color": [128, 128, 128],
+		"help": "Hi, the prefix is $prefix"
 	},
 	"goodmorning": {
 		"visualcrossingkey": "<visualcrossing key>",
@@ -12,13 +14,14 @@
 			"<channel>"
 		],
 		"goodmorning": [
-			"<channel>"
+			["<channel>", "location"]
 		],
-		"weather": [
-			"<channel>"
-		]
 	},
-	"stickers": {
-		"<sticker name>": "<sticker url>"
+	"say": {
+		"gametext": "<the game!>",
+		"stickers": {
+			"<sticker name>": "<sticker url>",
+			"<sticker name>": "<sticker url>"
+		}
 	}
 }
