@@ -177,7 +177,7 @@ fs.readdirSync("./cogs/").forEach(i => {
 });
 
 client.once("ready", async () => {
-	if (conf.main.activity) {
+	if (conf.main.activity)
 		client.user.setPresence({
 			activities: [{
 				name: conf.main.activity
@@ -355,14 +355,10 @@ client.on("messageCreate", async msg => {
 	if (msg.author.bot) return; // ignore bots
 	if (msg.author.system) return; // ignore system msgs (when they happen)
 	if (msg.author.discriminator === "0000") return; // ignore webhooks
+	if (msg.content[0] !== conf.main.prefix) return;
 	msg.embedreply   = client._embedreply;
 	msg.webhookreply = client._webhookreply;
 	msg.errorreply   = client._errorreply;
-	if (msg.content === client.user.toString()) { // help by ping
-		client.cmds["help"].func.bind(msg)([]);
-		return;
-	}
-	if (msg.content[0] !== conf.main.prefix) return;
 	let index = msg.content.indexOf(" ");
 	let cmd;
 	if (index === -1) {

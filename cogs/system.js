@@ -13,6 +13,17 @@ if (conf.system.helptext)
 else 
 	conf.system.helptext = "No help text set!";
 
+// Help text on ping
+client.on("messageCreate", async msg => {
+	if (msg.content !== client.user.toString()) return;
+	msg.channel.embedreply = client._embedreply;
+	msg.channel.embedreply({
+		title: "Help",
+		msg: conf.system.helptext,
+		color: conf.system.color
+	});
+});
+
 module.exports.cmds = {
 	"restart": {
 		desc: "Restart the bot",
