@@ -56,11 +56,11 @@ Cogs can be found in `./cogs/*.js`, this is the format of a cog
 ```js
 /* cogname.js
 <what I does>
-# Config
+Config
 "cogname": {
 	"name": <value>
 }
-# Dependencies
+Requires
 nop: provide an actuall reason for this library to exist, I'm serious go onto npm, search nop, and tell me why this exists and why 42 other libraries depend on LITERALLY NOTHING whilst having FIVE THOUSAND, THREE HUNDRED AND FORTY SIX WEEKLY DOWNLODS. LIKE I CAN WRITE THIS CODE RIGHT HERE RIGHT NOW, 3, 2, 1, function nop(){}, wow i DID IT AAAAGH
 */
 
