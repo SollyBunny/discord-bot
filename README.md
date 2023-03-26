@@ -18,11 +18,10 @@ Config is split between files where `main` is for the main file whilst others li
 Help for configuration for other cogs can be found at the top of their files  
 
 ### Main config
-`token`: The discord token to use (also known as OAuth2 Client Secret) 
+`token`: The discord token to use (also known as OAuth2 Client Secret)  
 `prefix`: The command prefix to use  
-`admins`:  
-`color`:  
-`help`:  
+`admins`: List of string IDs of admins  
+`activity`: Activity text of the bot  
 
 ###### This next part is for developers :)
 

@@ -26,6 +26,7 @@ if (!conf.main.token) {
 	log.error("I need a token please!");
 	process.exit(1);
 }
+conf.main = conf.main || {};
 conf.main.prefix = conf.main.prefix || "!";
 conf.main.admins = conf.main.admins || [];
 conf.main.errcolor = conf.main.errcolor || [255, 0, 0]
@@ -176,11 +177,12 @@ fs.readdirSync("./cogs/").forEach(i => {
 });
 
 client.once("ready", async () => {
-	client.user.setPresence({
-		activities: [{
-			name: "Ping to get help!"
-		}],
-	});
+	if (conf.main.activity) {
+		client.user.setPresence({
+			activities: [{
+				name: conf.main.activity
+			}],
+		});
 	log.info(`Ready as ${client.user.tag}`);
 	let commands = [];
 	Object.keys(client.cmds).forEach(i => {
