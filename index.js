@@ -253,7 +253,7 @@ client.once("ready", async () => {
 		if (client.cmds[i].args) {
 			let required = false;
 			client.cmds[i].args.forEach(i => {
-				let arg = {
+				const arg = {
 					autocomplete: undefined,
 					type: undefined,
 					name: i[1],
@@ -362,14 +362,13 @@ client._webhookreply = async function(user, msg) {
 client.on("interactionCreate", async itn => {
 	currentmsg = itn;
 	if (!itn.isCommand()) return;
-	let cmd = client.cmds[itn.commandName]
-	if (!cmd) // just in case
-		return;
+	const cmd = client.cmds[itn.commandName]
+	if (!cmd) return; // just in case
 	itn.embedreply = client._embedreply;
 	itn.errorreply = client._errorreply;
-	log.info(`slashcmd ${itn.user.tag}: ${itn.commandName}`);
 	itn.webhookreply = client._webhookreply;
-	let args = [];
+	log.info(`slashcmd ${itn.user.tag}: ${itn.commandName}`);
+	const args = [];
 	if (cmd.args) {
 		for (let i = 0; i < cmd.args.length; ++i) {
 			let opt = itn.options.get(cmd.args[i][1]);
