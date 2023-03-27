@@ -462,12 +462,11 @@ client.on("messageCreate", async msg => {
 			return;
 		}
 		for (let i = 0; i < cmd.args.length; ++i) {
-			if (!msg.content[i]) {
+			if (msg.content[i] === undefined) {
 				if (cmd.args[i][3]) { // if required
 					msg.errorreply(`Missing argument \`${cmd.args[i][1]}\``);
 					return;
 				}
-				args.push(undefined);
 				continue;
 			}
 			switch (cmd.args[i][0]) {
