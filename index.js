@@ -19,7 +19,7 @@ log.error = (m) => {
 };
 log.fake = (...m) => {
 	let out = "";
-	let old = process.stdout.write;
+	const old = process.stdout.write;
 	process.stdout.write = (a, b, c) => {
 		out += a;
 	};
@@ -46,7 +46,7 @@ conf.main.errcolor = conf.main.errcolor || [255, 0, 0]
 global.util = {};
 
 // Get the levenhtein distance between two strings
-util.levdis = (a, b, t) => {
+util.levdis = (a, b) => {
 	// https://en.wikipedia.org/wiki/Levenshtein_distance
 	// ChatGPT is gonna kill us all
 	const d = [];

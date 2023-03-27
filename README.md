@@ -31,6 +31,14 @@ Stuff which you can use everywhere
 ### Modules
 Both `fs` and `http`s are included
 
+### Custom log
+When possible use the custom `log` global instead of `console.log`, here are the functions available:  
+`log(msg: String) => undefined`: Print a debug msg  
+`log.info(msg: String) => undefined`: Print an info msg  
+`log.warn(msg: String) => undefined`: Print a warn msg  
+`log.error(msg: String) => undefined`: Print an error msg  
+`log.fake(...args: *) => String`: Same arguments as `console.log`, outputs the string which woud've been printed (includes escape codes) (don't use this) (ever)  
+
 ### Discord.js
 Discord.js is included as `dc` with added parts  
 #### Argument types
@@ -39,7 +47,8 @@ This is mostly for internal use. The types of arguments are `dc.TEXT`, `dc.BIGTE
 
 ### Util
 `util.levdis(a: String, b: String) => dis: Integer`: Get the levenhtein distance between two strings  
-`util.levdissort(list: List<String>, target: String, cutoff: Integer) => List<String>`: Sort a list by `levdis` to a `target` (items further than `cutoff` are removed)  
+`util.levdisclosest(list: List<String>, target: String, cutoff: Integer) => List<String>`: Sort a list by `levdis` to a `target` (items further than `cutoff` are removed)  
+`util.levdisuserclosest(list: List<User / GuildMember>, target: String, cutoff: Integer) => List<String>`: Sort a list of users by `levdis` to a `target` (items further than `cutoff` are removed)  
 `async util.fetch(url: String) => String`: A url fetching tool when bultin fetch and http don't work  
 
 ### Client

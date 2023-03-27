@@ -1,4 +1,4 @@
-/* say.js
+/* react.js
 React to what people say
 
 Config:
