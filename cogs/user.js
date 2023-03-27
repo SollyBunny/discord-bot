@@ -3,30 +3,16 @@ Find info about your friends
 */
 
 module.exports.cmds = {
-	"avatar": {
-		desc: "Show someone's profile picture",
-		args: [
-			[dc.USER, "user", "Who's profile picture", false],
-		],
-		func: async function (args) {
-			args = args[0] || this.member;
-			this.embedreply({
-				title: "Avatar",
-				image: args.displayAvatarURL({ dynamic: true }),
-				color: args.displayColor === 0 ? [255, 255, 255] : util.rgbtoarr(args.displayColor)
-			});
-		}
-	},
 	"profile": {
 		desc: "Show someone's profile",
 		args: [
 			[dc.USER, "user", "Who's profile", false],
 		],
 		func: async function (args) {
-			args = args[0] || this.member;
+			args = args[0] || this.member || this.user;
 			let embed = {
-				image: args.displayAvatarURL({ dynamic: true }),
-				color: args.displayColor === 0 ? [255, 255, 255] : util.rgbtoarr(args.displayColor),
+				thumb: args.displayAvatarURL({ dynamic: true }),
+				colorraw: args.displayColor,
 				fields: [
 					{
 						name: "ID",
@@ -55,12 +41,25 @@ module.exports.cmds = {
 					});
 				}
 			}
-			if (args.nickname) {
+			if (args.nickname)
 				embed.title = `${args.nickname} (${args.tag || args.user.tag})`;
-			} else {
+			else
 				embed.title = args.tag || args.user.tag;
-			}
 			this.embedreply(embed);
+		}
+	},
+	"avatar": {
+		desc: "Show someone's profile picture",
+		args: [
+			[dc.USER, "user", "Who's profile picture", false],
+		],
+		func: async function (args) {
+			args = args[0] || this.member || this.user;
+			this.embedreply({
+				title: `${args.nickname || args.username}'s avatar`,
+				image: args.displayAvatarURL({ dynamic: true }) + "?size=512",
+				colorraw: args.displayColor
+			});
 		}
 	},
 	"perms": {
@@ -70,13 +69,15 @@ module.exports.cmds = {
 		],
 		dm: false,
 		func: async function (args) {
-			args = args[0] || this.member;
+			console.log(args);
+			args = args[0] || this.member || this.user;
 			let perms = args.permissions.serialize();
 			this.embedreply({
-				msg: Object.keys(perms).map(i => {
-					return `${i}: ${perms[i]}`
-				}).join("\n"),
-				color: (255, 128, 0)
+				title: `${args.displayName}'s permissions`,
+				msg: Object.keys(perms).filter(i => {
+					return perms[i];
+				}).join(", "),
+				colorraw: args.displayColor
 			});
 		}
 	},

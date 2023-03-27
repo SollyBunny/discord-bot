@@ -3,7 +3,7 @@
 		"token": "<token>",
 		"prefix": "!",
 		"admins": ["<your id here>"],
-		"activity": "Ping to get help!"
+		"activity": "I'm a bot"
 	},
 	"system": {
 		"color": [128, 128, 128],
@@ -19,10 +19,15 @@
 		],
 	},
 	"say": {
-		"gametext": "<the game!>",
 		"stickers": {
 			"<sticker name>": "<sticker url>",
 			"<sticker name>": "<sticker url>"
 		}
+	},
+	"react": {
+		"gametext": "<the game!>",
+		"dadpfp": "<pfp>",
+		"dadname": "<im dad>",
+		"dadtext": "Hi, $x, I'm $y!"
 	}
 }

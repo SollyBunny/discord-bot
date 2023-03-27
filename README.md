@@ -40,7 +40,6 @@ This is mostly for internal use. The types of arguments are `dc.TEXT`, `dc.BIGTE
 ### Util
 `util.levdis(a: String, b: String) => dis: Integer`: Get the levenhtein distance between two strings  
 `util.levdissort(list: List<String>, target: String, cutoff: Integer) => List<String>`: Sort a list by `levdis` to a `target` (items further than `cutoff` are removed)  
-`util.rgbtoarr(rgb: Integer) => List<Integer>)`: Convert a 24 bit rgb int to an array of the rgb values  
 `async util.fetch(url: String) => String`: A url fetching tool when bultin fetch and http don't work  
 
 ### Client

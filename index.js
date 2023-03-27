@@ -17,6 +17,16 @@ log.warn = (m) => {
 log.error = (m) => {
 	log.raw("E", 31, m);
 };
+log.fake = (...m) => {
+	let out = "";
+	let old = process.stdout.write;
+	process.stdout.write = (a, b, c) => {
+		out += a;
+	};
+	console.log(...m)
+	process.stdout.write = old;
+	return out;
+}
 
 
 // Config
@@ -36,42 +46,87 @@ conf.main.errcolor = conf.main.errcolor || [255, 0, 0]
 global.util = {};
 
 // Get the levenhtein distance between two strings
-util.levdis = (a, b) => {
+util.levdis = (a, b, t) => {
 	// https://en.wikipedia.org/wiki/Levenshtein_distance
-	if (a.length === 0) return b.length;
-	if (b.length === 0) return a.length;
-	if (a[0] == b[0]) return util.levdis(a.slice(1), b.slice(1));
-	return Math.min(
-		util.levdis(a.slice(1), b),
-		util.levdis(a, b.slice(1)),
-		util.levdis(a.slice(1), b.slice(1))
-	) + 1;
+	// ChatGPT is gonna kill us all
+	const d = [];
+	const n = a.length;
+	const m = b.length;
+
+	if (n == 0) return m;
+	if (m == 0) return n;
+
+	for (let i = 0; i <= n; ++i) {
+		d[i] = [];
+		d[i][0] = i;
+	}
+	for (let j = 0; j <= m; ++j)
+		d[0][j] = j;
+
+	for (let j = 1; j <= m; ++j) {
+		for (let i = 1; i <= n; ++i) {
+			if (a[i - 1] === b[j - 1])
+				d[i][j] = d[i - 1][j - 1];
+			else
+				d[i][j] = Math.min(
+					d[i - 1][j],
+					d[i][j - 1],
+					d[i - 1][j - 1]
+				) + 1;
+		}
+	}
+	return d[n][m];
 };
 
-// Sort a list by lev distance to a string (v), where entries further than t away are removed
-util.levdissort = (l, v, t) => {
-	l = l.map(i => { // work out all levdis from v
-		return [i, util.levdis(i, v)];
-	});
-	l = l.filter(i => { // remove elements with distance bigger than t
-		return i[1] < t
-	});
-	l = l.sort((a, b) => { // sort by levdis
-		return a[1] - b[1];
-	});
-	l = l.map(i => { // remove levdis
-		return i[0];
-	});
-	return l;
+// Get the closest value to a target by levdis, cutoff t
+util.levdisclosest = (l, v, t) => {
+	let min_s = undefined;
+	let min_d = Infinity;
+	let d;
+	for (let i = 0; i < l.length; ++i) {
+		d = util.levdis(l[i], v);
+		if (d < 2) {
+			min_s = l[i];
+			break;
+		}
+		if (d > t) continue;
+		if (d < min_d) {
+			min_s = l[i];
+			min_d = d;
+		}
+	}
+	return min_s;
 };
 
-// Convert a number in the rgb format to an array of its rgb values
-util.rgbtoarr = (n) => {
-	return [
-		n         & 255,
-		(n >> 8 ) & 255,
-		(n >> 16),
-	];
+// Get the closest value to a target by levdis, cutoff t, l being a list of users
+util.levdisuserclosest = (l, v, t) => {
+	v = v.toLowerCase();
+	let min_s = undefined;
+	let min_d = Infinity;
+	let d, m;
+	for (let i = 0; i < l.size || l.length; ++i) {
+		m = l.at(i);
+		if (m.nickname === null) {
+			d = util.levdis(m.user.username.toLowerCase(), v);
+		} else if (m.nickname) {
+			d = Math.min(
+				util.levdis(m.nickname.toLowerCase(), v),
+				util.levdis(m.user.username.toLowerCase(), v)
+			);
+		} else {
+			d = util.levdis(m.username.toLowerCase(), v);
+		}
+		//currentmsg.reply(`${i}: ${min_s} ${min_d}`);
+		if (d < t) {
+			min_s = m;
+			break;
+		}
+		if (d < min_d) {
+			min_s = m;
+			min_d = d;
+		}
+	}
+	return min_s;
 };
 
 // A fetch function using http (usefull when fetch refuses to work and when fetch isn't available)
@@ -86,11 +141,9 @@ util.fetch = async function(url) {
 			let body = "";
 			res.on("data", chunk => { body += chunk; });
 			res.on("end", () => {
-				resolve(body)
+				resolve(body);
 			});
-		}).on("error", e => {
-			reject(e);
-		});
+		}).on("error", reject);
 	});
 };
 
@@ -255,6 +308,7 @@ client._embedreply = async function({
 	msg    = "",
 	title  = undefined,
 	color  = undefined,
+	colorraw = undefined,
 	fields = undefined,
 	thumb  = undefined,
 	image  = undefined,
@@ -263,12 +317,11 @@ client._embedreply = async function({
 	let embed = {
 		description: msg,
 		title      : title,
-		color      : color ? (color[0] << 16) + (color[1] << 8) + color[2] : 0,
+		color      : colorraw || (color ? (color[0] << 16) + (color[1] << 8) + color[2] : 0),
 		fields     : fields,
 		thumbnail  : thumb ? { url: thumb } : undefined,
 		image      : image ? { url: image } : undefined,
-		url        : url,
-		timestamp  : new Date().toISOString()
+		url        : url
 	};
 	try {
 		this.reply ({ embeds: [embed] });
@@ -290,14 +343,14 @@ client._errorreply = async function(msg) {
 }
 
 client._webhookreply = async function(user, msg) {
-	if (!this.inGuild()) {
+	if (user.nickname !== null && !user.nickname) {
 		this.reply(msg); // TODO find some way to alert the user of the inability of webhooks in DMs
 		return;
 	}
 	let webhook = await this.channel.createWebhook({
 		name: user.nickname || user.username || user.user.username,
 		channel: this.channel,
-		avatar: user.avatarURL() || user.user.avatarURL()
+		avatar: user.rawAvatarURL || user.avatarURL() || user.user.avatarURL()
 	});
 	await webhook.send({
 		content: msg,
@@ -309,11 +362,11 @@ client._webhookreply = async function(user, msg) {
 client.on("interactionCreate", async itn => {
 	currentmsg = itn;
 	if (!itn.isCommand()) return;
-	let cmd = client.cmds[itn.commandName];
-	itn.embedreply = client._embedreply;
-	itn.errorreply = client._errorreply;
+	let cmd = client.cmds[itn.commandName]
 	if (!cmd) // just in case
 		return;
+	itn.embedreply = client._embedreply;
+	itn.errorreply = client._errorreply;
 	log.info(`slashcmd ${itn.user.tag}: ${itn.commandName}`);
 	itn.webhookreply = client._webhookreply;
 	let args = [];
@@ -322,7 +375,7 @@ client.on("interactionCreate", async itn => {
 			let opt = itn.options.get(cmd.args[i][1]);
 			if (opt) {
 				switch (opt.type) {
-					case dc.USER:
+					case 6: // dc.USER
 						opt = opt.member || opt.user;
 						break;
 					default: // everything else
@@ -356,28 +409,26 @@ client.on("messageCreate", async msg => {
 	if (msg.author.system) return; // ignore system msgs (when they happen)
 	if (msg.author.discriminator === "0000") return; // ignore webhooks
 	if (msg.content[0] !== conf.main.prefix) return;
-	msg.embedreply   = client._embedreply;
-	msg.webhookreply = client._webhookreply;
-	msg.errorreply   = client._errorreply;
 	let index = msg.content.indexOf(" ");
 	let cmd;
 	if (index === -1) {
-		cmd = msg.content.slice(1);
+		msg.cmdname = msg.content.slice(1);
 		msg.content = "";
 	} else { 
-		cmd = msg.content.slice(1, index);
+		msg.cmdname = msg.content.slice(1, index);
 		msg.content = msg.content.slice(index + 1);
 	}
-	cmd = cmd.toLowerCase();
-	log.info(`cmd ${msg.author.tag}: ${cmd} ${msg.content}`);
-	if (client.cmds[cmd]) {
-		cmd = client.cmds[cmd];
-	} else { // use fuzzy match
-		let match = util.levdissort(Object.keys(client.cmds), cmd, 3);
-		if (match.length === 0) // nothing near to it
-			return;
-		cmd = client.cmds[match[0]]; // chose nearest match
+	msg.cmdname = msg.cmdname.toLowerCase();
+	if (!client.cmds[msg.cmdname]) { // use fuzzy match
+		msg.cmdname = util.levdisclosest(Object.keys(client.cmds), msg.cmdname, 3);
+		if (!msg.msgname) return; // nothing near to it
 	}
+	cmd = client.cmds[msg.cmdname];
+
+	msg.embedreply   = client._embedreply;
+	msg.webhookreply = client._webhookreply;
+	msg.errorreply   = client._errorreply;
+	log.info(`cmd ${msg.author.tag}: ${msg.cmdname} ${msg.content}`);
 
 	if (conf.main.admins.indexOf(msg.author.id) === -1) {
 		if (cmd.admin) {
@@ -403,11 +454,13 @@ client.on("messageCreate", async msg => {
 			msg.content = [];
 		} else {
 			msg.content = msg.content.split(/(?<=[^\\]) /g);
-			for (let i = 0; i < msg.content.length; ++i) {
+			for (let i = 0; i < msg.content.length; ++i)
 				msg.content[i] = msg.content[i].replace(/\\ /g, " ");
-			}
 		}
-		let args = [];
+		if (msg.content.length > cmd.args.length && cmd.args.at(-1)[0] !== dc.BIGTEXT) {
+			msg.errorreply("Too many arguments");
+			return;
+		}
 		for (let i = 0; i < cmd.args.length; ++i) {
 			if (!msg.content[i]) {
 				if (cmd.args[i][3]) { // if required
@@ -419,40 +472,55 @@ client.on("messageCreate", async msg => {
 			}
 			switch (cmd.args[i][0]) {
 				case dc.USER:
-					/*let members;
-					if (msg.inGuild())
-						members = await msg.channel.guild.members.fetch()
-					else
-						members = [msg.channel.re]*/ // TODO
+					let user;
 					let id = msg.content[i].match(/[0-9]+/);
 					if (id) {
 						id = id[0];
-						user = await client.users.fetch(id) // try fetch user (also looks in cache)
-						if (user) {
-							args.push(user);
-							break;
+						try {
+							user = await msg.guild.members.fetch(id);
+						} catch (e) {
+							if (cmd.dm) {
+								try {
+									user = await client.users.fetch(id);
+								} catch (e) {
+
+								}
+							}
 						}
 					}
-					msg.errorreply("Invalid user");
-					return;
-				case dc.BIGTEXT:
-					let txt = msg.content.slice(i).join(" ");
-					args.push(txt);
+					if (!user) {
+						if (msg.channel.members) {
+							user = util.levdisuserclosest(
+								msg.channel.members,
+								msg.content[i],
+								3
+							);
+						} else {
+							user = util.levdisuserclosest(
+								[ client.user, msg.author ],
+								msg.content[i],
+								3
+							);
+						}
+					}
+					if (!user) {
+						msg.errorreply("Invalid user");
+						return;
+					}
+					msg.content[i] = user;
 					break;
-				case dc.TEXT:
-					args.push(msg.content[i]);
+				case dc.BIGTEXT:
+					msg.content[i] = msg.content.slice(i).join(" ");
 					break;
 				case dc.CHOICE:
 					msg.content[i] = msg.content[i].toLowerCase();
 					if (cmd.args[i][4].indexOf(msg.content[i]) === -1) {
-						let match = util.levdissort(cmd.args[i][4], msg.content[i], 3);
-						if (match.length === 0) { // nothing near to it
+						msg.content[i] = util.levdisclosest(cmd.args[i][4], msg.content[i], 3);
+						if (msg.content[i] === undefined) { // nothing near to it
 							msg.errorreply(`Invalid choice \`${msg.content[i]}\` for \`${cmd.args[i][1]}\`, valid options are:\n\`` + cmd.args[i][4].join("\`, \`") + "\`"); // "
 							return;
 						}
-						msg.content[i] = match[0]; // chose nearest match
 					}
-					args.push(msg.content[i]);
 					break;
 				case dc.INT:
 					msg.content[i] = Math.round(msg.content[i]);
@@ -477,14 +545,11 @@ client.on("messageCreate", async msg => {
 						}
 						return;
 					}
-					args.push(msg.content[i]);
 					break;
-				default:
-					args.push(msg.content[i]);
 			}
 		}
 		if (cmd.hide && msg.inGuild()) msg.delete();
-		cmd.func.bind(msg)(args);
+		cmd.func.bind(msg)(msg.content);
 	} else {
 		if (cmd.hide && msg.inGuild()) msg.delete();
 		cmd.func.bind(msg)([]);
@@ -501,12 +566,11 @@ process.on("uncaughtException", e => {
 		case 30007: // DiscordAPIError Maximum number of webhooks reached
 			currentmsg.guild.fetchWebhooks().then(w => {
 				w.forEach(i => {
-					if (i.owner.id !== client.user.id) return;
-					i.delete();
+					if (i.owner.id === client.user.id) i.delete();
 				});
 			});
 			client._embedreply.bind(currentmsg)({
-				color: (255, 128, 0),
+				color: [255, 128, 0],
 				title: "Warn",
 				msg: "Maximum number of webhooks reached, deleting! (redo command in 5s)"
 			});

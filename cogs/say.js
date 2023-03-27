@@ -3,15 +3,12 @@ Trolling.inc
 
 Config:
 "say": {
-	"gametext": "<something annoying>"
 	"stickers": {
 		"<name1>": "<funnygif1>",
 		"<name2>": "<funnygif2>"
 	}
 }
 */
-
-conf.say.gametext = conf.say.gametext || "The game!";
 
 const predict = require("./predict.json");
 const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ !?*(),.#\"\'\n".split("");
@@ -45,16 +42,6 @@ module.exports.cmds = {
 				if (out.length > 100) break;
 			}
 			this.webhookreply(this.member, out);
-		}
-	},
-	"game": { // NOTE: this is a massive in joke
-		desc: "The Game!!! (and much more)",
-		func: async function (args) {
-			try {
-				await this.reply ({ content: conf.say.gametext });
-			} catch (e) {
-				this.channel.send({ content: conf.say.gametext });
-			}			
 		}
 	},
 	"echo": {

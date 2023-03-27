@@ -204,7 +204,6 @@ module.exports.cmds = {
 	},
 	"test_cron": {
 		desc: "Run all cron functions now",
-		dm: false,
 		admin: true,
 		func: async function (args) {
 			t0700();

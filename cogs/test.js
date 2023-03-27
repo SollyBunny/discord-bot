@@ -3,6 +3,42 @@ Janky normally admin only commands
 */
 
 module.exports.cmds = {
+	"test_levdis": {
+		desc: "Levdis between two strings",
+		args: [
+			[dc.TEXT, "a", "The first string", true], // TODO support no description
+			[dc.TEXT, "b", "The second string", true]
+		],
+		func: async function (args) {
+			const start = performance.now();
+			const res = util.levdis(args[0], args[1]);
+			const end = performance.now();
+			this.embedreply({
+				title: "Levdis",
+				msg: `${res} (${end - start}ms)`
+			});
+		}
+	},
+	"test_levdisclosest": {
+		desc: "Get closest value to target",
+		args: [
+			[dc.BIGTEXT, "text", "Space seperated list of values where the first is the target", true]
+		],
+		func: async function (args) {
+			args = args[0].split(" ");
+			if (args.length < 2) {
+				this.errorreply("Not enough args");
+				return;
+			}
+			const start = performance.now();
+			const res = util.levdisclosest(args.slice(1), args[0], 3);
+			const end = performance.now();
+			this.embedreply({
+				title: "Levdisclosest",
+				msg: `${res} (${end - start}ms)\n`
+			});
+		}
+	},
 	"test_reloadconfig": {
 		desc: "Reload config, janky (don't use)",
 		admin: true,
@@ -17,7 +53,7 @@ module.exports.cmds = {
 		desc: "Raise an error",
 		admin: true,
 		args: [
-			[dc.TEXT, "message", "Message to show as error", false],			
+			[dc.TEXT, "message", "Message to show as error", false],
 		],
 		func: async function (args) {
 			throw Error(args[0] || "Crash Command");
