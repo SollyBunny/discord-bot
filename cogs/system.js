@@ -32,6 +32,14 @@ module.exports.cmds = {
 			process.exit(0);
 		}
 	},
+	"shutdown": {
+		desc: "Shutdown the bot",
+		admin: true,
+		func: async function (args) {
+			// Hint that the scripts outside should... ya know not restart
+			process.exit(1);
+		}
+	},
 	"help": {
 		desc: "Get help",
 		args: [

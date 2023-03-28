@@ -354,7 +354,11 @@ client._webhookreply = async function(user, msg) {
 	});
 	await webhook.send({
 		content: msg,
-		username: user.nickname || user.username || user.user.username
+		username: user.nickname || user.username || user.user.username,
+		allowedMentions: {
+			"users" : [],
+			"roles" : []
+		}
 	});
 	await webhook.delete();
 }
