@@ -28,6 +28,7 @@
 		"gametext": "<the game!>",
 		"dadpfp": "<pfp>",
 		"dadname": "<im dad>",
-		"dadtext": "Hi, $x, I'm $y!"
+		"dadtext": "Hi, $x, I'm $y!",
+		"dadchance": 0.5
 	}
 }

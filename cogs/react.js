@@ -6,14 +6,16 @@ Config:
 	"gametext": "<the game!>",
 	"dadpfp": "<pfp>",
 	"dadname": "<im dad>",
-	"dadtext": "Hi, $x, I'm $y"
+	"dadtext": "Hi, $x, I'm $y",
+	"dadchance": 0.5
 }
 */
 
 conf.react.gametext = conf.react.gametext || "The game!";
 conf.react.dadname = conf.react.dadname || "Dad";
 conf.react.dadtext = conf.react.dadtext || "Hi, $x, I'm $y!";
-conf.react.dadtext = conf.react.dadtext.replaceAll("$y", conf.react.dadname)
+conf.react.dadtext = conf.react.dadtext.replaceAll("$y", conf.react.dadname);
+conf.react.dadchance = conf.react.dadchance || 1;
 
 client.on("messageCreate", async msg => {
 	if (msg.author.bot) return; // ignore bots
@@ -27,6 +29,7 @@ client.on("messageCreate", async msg => {
 			msg.channel.send({ content: conf.react.gametext });
 		}
 	} else if (msg.content.startsWith("im ") || msg.content.startsWith("i'm ") || msg.content.startsWith("i’m ")) {
+		if (Math.random() > conf.react.dadchance) return;
 		msg.content = conf.react.dadtext.replace("$x", msg.content.slice(3).trim().slice(0, 100));
 		msg.webhookreply = client._webhookreply;
 		msg.webhookreply(
