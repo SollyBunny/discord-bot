@@ -17,27 +17,31 @@ conf.react.dadtext = conf.react.dadtext || "Hi, $x, I'm $y!";
 conf.react.dadtext = conf.react.dadtext.replaceAll("$y", conf.react.dadname);
 conf.react.dadchance = conf.react.dadchance || 1;
 
-client.on("messageCreate", async msg => {
-	if (msg.author.bot) return; // ignore bots
-	if (msg.author.system) return; // ignore system msgs (when they happen)
-	if (msg.author.discriminator === "0000") return; // ignore webhooks
-	msg.content = msg.content.toLowerCase();
-	if (msg.content.indexOf("the game") !== -1) {
-		try {
-			await msg.reply ({ content: conf.react.gametext });
-		} catch (e) {
-			msg.channel.send({ content: conf.react.gametext });
+module.exports.hooks = [
+	{
+		event: "messageCreate",
+		priority: -10,
+		func: async function() {
+			if (this.author.isNotPerson) return;
+			this.content = this.content.toLowerCase();
+			if (this.content.indexOf("the game") !== -1) {
+				try {
+					await this.reply ({ content: conf.react.gametext });
+				} catch (e) {
+					this.channel.send({ content: conf.react.gametext });
+				}
+			} else if (this.content.startsWith("im ") || this.content.startsWith("i'm ") || this.content.startsWith("i’m ")) {
+				if (Math.random() > conf.react.dadchance) return;
+				this.content = conf.react.dadtext.replace("$x", this.content.slice(3).trim().slice(0, 100));
+				this.webhookreply(
+					{
+						nickname: conf.react.dadname,
+						rawAvatarURL: conf.react.dadpfp
+					},
+					this.content
+				);
+			} else { return; }
+			return true;
 		}
-	} else if (msg.content.startsWith("im ") || msg.content.startsWith("i'm ") || msg.content.startsWith("i’m ")) {
-		if (Math.random() > conf.react.dadchance) return;
-		msg.content = conf.react.dadtext.replace("$x", msg.content.slice(3).trim().slice(0, 100));
-		msg.webhookreply = client._webhookreply;
-		msg.webhookreply(
-			{
-				nickname: conf.react.dadname,
-				rawAvatarURL: conf.react.dadpfp
-			},
-			msg.content
-		);
 	}
-});
+];

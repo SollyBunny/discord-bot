@@ -55,8 +55,10 @@ This is mostly for internal use. The types of arguments are `dc.TEXT`, `dc.BIGTE
 Where all client related shenanigans is stored, refer to (docs)[https://discord.js.org/#/docs/discord.js/main/class/Client] for more info  
 `client.cmds`: Dictionary of commands  
 `client.cogs`: Paths of loaded cogs  
+`client.hooks`: All hooks  
 Here are some functions!  
-`client.cogs.load(name: String) => undefined` Load a cog
+`client.cogs.load(name: String) => undefined` Load a cog  
+`client.hooks.add(event: String, priority: Number, func: async function => Boolean) => undefined` Add a hook  
 
 ## Cogs
 Cogs can be found in `./cogs/*.js`, this is the format of a cog  
@@ -71,10 +73,15 @@ Requires
 nop: provide an actuall reason for this library to exist, I'm serious go onto npm, search nop, and tell me why this exists and why 42 other libraries depend on LITERALLY NOTHING whilst having FIVE THOUSAND, THREE HUNDRED AND FORTY SIX WEEKLY DOWNLODS. LIKE I CAN WRITE THIS CODE RIGHT HERE RIGHT NOW, 3, 2, 1, function nop(){}, wow i DID IT AAAAGH
 */
 
-module.exports.cmds = {
+module.exports.hooks = { // optional
 	...
 };
 
+module.exports.cmds = { // optional
+	...
+};
+
+// optional
 console.log("Put effects here");
 ```
 
@@ -92,10 +99,9 @@ Here are some extra options
 `admin`: Whether user must be an admin (in `conf.main.admins`)  
 `dm`: Whether this command can be used in DMs or not  
 `hide`: Whether the calling of this command is hidden  
-`args`: List of arguments (look below for more info)
-
-### Arguments
-Arguments are very clamplicated, here is an example of some args  
+`args`: List of arguments (look below for more info)  
+  
+Here is the format for the argument param  
 ```js
 args: [
 	[dc.TEXT, "channel", "Name of channel", true],
@@ -103,22 +109,24 @@ args: [
 	[dc.INT, "server", "ID of the server", false]
 ]
 ```  
-And an explanation of the format
+And the format
 ```js
 args: [
 	[dc.TYPEOFARG, "name", "Description", <required>]
 ]
 ```
 As a reminder, the arg types are `dc.TEXT`, `dc.BIGTEXT`, `dc.INT`, `dc.NUM`, `dc.USER`, `dc.ROLE`, `dc.BOOL`, `dc.CHOICE`. There are also some extra items for certain arg types  
-#### dc.INT / dc.NUM
-2 more arguments `min` and `max` can be specified
-#### dc.CHOICE
-another argument of a list must be specified with the different things this argument can be
+`dc.INT` / `dc.NUM` 2 more arguments `min` and `max` can be specified  
+`dc.CHOICE`: another argument of a list must be specified with the different things this argument can be  
+  
+In the command function, `this` refers to the (message)[https://discord.js.org/#/docs/discord.js/main/class/Message], (interaction)[https://discord.js.org/#/docs/discord.js/main/class/CommandInteraction] object with some extras.  
+These extras are:
+`this.author.isNotPerson`: Whether the author is a bot, system or webhook message or just a user  
+`async this.embedreply(Object {<opts>}) => undefined`: Send an embed reply  
+`async this.errorreply(msg: String) => undefined`: A shorthand for an error message embedreply  
+`async this.webhookreply(user: dc.GuildMember, msg: String) => undefined`: Send a message as a different user (sends a message in DMs)  
 
-### IO
-In the command function, `this` refers to the message object with some extras
-#### Embedreply
-This is the most complicated given function, and as such I'm going to break it down a bit more. Here is the semi formal syntax for referance  
+Here is an explanation of the most complicated given function, and as such I'm going to break it down a bit more. Here is the semi formal syntax for referance  
 ```js
 async this.embedreply(Object<{
 	msg: String
@@ -141,7 +149,22 @@ await this.embed({
 });
 ```
 See? ez.
-#### Everything else
-`async this.errorreply(msg: String)`: A shorthand for an error message embedreply  
-`async this.webhookreply(user: dc.GuildMember, msg: String)`: Send a message as a different user (doesn't work in DMs)
+
+### Hooks
+
+In `module.exports.hooks` you can place any amount of hooks in this format  
+```js
+"commandname": {
+	"event": "<event name>",
+	"priority": 0,
+	"func": async function () {
+		...
+	}
+}
+```  
+Explanation of each param:  
+`event`: The name of the event to hook to, you can see them (here)[https://discord.js.org/#/docs/discord.js/main/class/Client] -> events  
+`priority`: The (order) priority of this hook (-10, 0, 10 are normal)  
+`func`: The function, this is the event object, return `true` to "consume" this event  
+
 

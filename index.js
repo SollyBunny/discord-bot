@@ -210,6 +210,89 @@ global.client = new dc.Client({
 	]
 });
 
+// Builtins
+
+client._embedreply = async function({
+	msg    = "",
+	title  = undefined,
+	color  = undefined,
+	colorraw = undefined,
+	fields = undefined,
+	thumb  = undefined,
+	image  = undefined,
+	url    = undefined
+}) {
+	let embed = {
+		description: msg,
+		title      : title,
+		color      : colorraw || (color ? (color[0] << 16) + (color[1] << 8) + color[2] : 0),
+		fields     : fields,
+		thumbnail  : thumb ? { url: thumb } : undefined,
+		image      : image ? { url: image } : undefined,
+		url        : url
+	};
+	try {
+		this.reply ({ embeds: [embed] });
+	} catch (e) { // if msg is deleted
+		try {
+			this.channel.send({ embeds: [embed] });
+		} catch (e) {
+			this.send({ embeds: [embed] });	
+		}
+	}
+};
+
+client._errorreply = async function(msg) {
+	await this.embedreply({
+		msg: msg,
+		title: "Error",
+		color: conf.main.errcolor,
+	});
+};
+
+client._webhookreply = async function(user, msg) {
+	if (user.nickname !== null && !user.nickname) {
+		this.reply(msg); // TODO find some way to alert the user of the inability of webhooks in DMs
+		return;
+	}
+	let webhook = await this.channel.createWebhook({
+		name: user.nickname || user.username || user.user.username,
+		channel: this.channel,
+		avatar: user.rawAvatarURL || user.avatarURL() || user.user.avatarURL()
+	});
+	await webhook.send({
+		content: msg,
+		username: user.nickname || user.username || user.user.username,
+		allowedMentions: {
+			"users" : [],
+			"roles" : []
+		}
+	});
+	await webhook.delete();
+};
+
+// Hooks
+client.hooks = {};
+client.hooks.add = (event, priority, func) => {
+	log.info(`Registered hook for ${event}, priority: ${priority}`);
+	if (priority === undefined)
+		priority | -Infinity
+	func.priority = priority;
+	if (client.hooks[event] === undefined) { // init event hook
+		client.on(event, client.hooks.run.bind(event));
+		client.hooks[event] = [func];
+		return;
+	}
+	let i = 0;
+	for (; i < client.hooks[event].length; ++i)
+		if (priority > client.hooks[event][i].priority) break;
+	client.hooks[event].splice(i, 0, func);
+};
+client.hooks.run = async function(arg) { // must be a function for this to work
+	for (let i = 0; i < client.hooks[this].length; ++i)
+		if (await client.hooks[this][i].apply(arg)) return; // return if the hook returns true
+}
+
 // Cogs
 client.cmds = {};
 client.cogs = [];
@@ -221,6 +304,11 @@ client.cogs.load = (name) => {
 			client.cmds[i] = cog.cmds[i];
 		});
 	}
+	if (cog.hooks) {
+		cog.hooks.forEach(i => {
+			client.hooks.add(i.event, i.priority, i.func);
+		});
+	}
 	if (!conf[name])
 		conf[name] = {};
 	log.info(`Loaded cog ${name}`);
@@ -229,7 +317,7 @@ fs.readdirSync("./cogs/").forEach(i => {
 	client.cogs.load(i);
 });
 
-client.once("ready", async () => {
+client.hooks.add("ready", 0, async function() {
 	if (conf.main.activity)
 		client.user.setPresence({
 			activities: [{
@@ -304,78 +392,19 @@ client.once("ready", async () => {
 	log.info(`Commands pushed`);
 });
 
-client._embedreply = async function({
-	msg    = "",
-	title  = undefined,
-	color  = undefined,
-	colorraw = undefined,
-	fields = undefined,
-	thumb  = undefined,
-	image  = undefined,
-	url    = undefined
-}) {
-	let embed = {
-		description: msg,
-		title      : title,
-		color      : colorraw || (color ? (color[0] << 16) + (color[1] << 8) + color[2] : 0),
-		fields     : fields,
-		thumbnail  : thumb ? { url: thumb } : undefined,
-		image      : image ? { url: image } : undefined,
-		url        : url
-	};
-	try {
-		this.reply ({ embeds: [embed] });
-	} catch (e) { // if msg is deleted
-		try {
-			this.channel.send({ embeds: [embed] });
-		} catch (e) {
-			this.send({ embeds: [embed] });	
-		}
-	}
-}
-
-client._errorreply = async function(msg) {
-	await this.embedreply({
-		msg: msg,
-		title: "Error",
-		color: conf.main.errcolor,
-	});
-}
-
-client._webhookreply = async function(user, msg) {
-	if (user.nickname !== null && !user.nickname) {
-		this.reply(msg); // TODO find some way to alert the user of the inability of webhooks in DMs
-		return;
-	}
-	let webhook = await this.channel.createWebhook({
-		name: user.nickname || user.username || user.user.username,
-		channel: this.channel,
-		avatar: user.rawAvatarURL || user.avatarURL() || user.user.avatarURL()
-	});
-	await webhook.send({
-		content: msg,
-		username: user.nickname || user.username || user.user.username,
-		allowedMentions: {
-			"users" : [],
-			"roles" : []
-		}
-	});
-	await webhook.delete();
-}
-
-client.on("interactionCreate", async itn => {
-	currentmsg = itn;
-	if (!itn.isCommand()) return;
-	const cmd = client.cmds[itn.commandName]
+client.hooks.add("interactionCreate", 0, async function() {
+	currentmsg = this;
+	if (!this.isCommand()) return;
+	const cmd = client.cmds[this.commandName]
 	if (!cmd) return; // just in case
-	itn.embedreply = client._embedreply;
-	itn.errorreply = client._errorreply;
-	itn.webhookreply = client._webhookreply;
-	log.info(`slashcmd ${itn.user.tag}: ${itn.commandName}`);
+	this.embedreply = client._embedreply;
+	this.errorreply = client._errorreply;
+	this.webhookreply = client._webhookreply;
+	log.info(`slashcmd ${this.user.tag}: ${this.commandName}`);
 	const args = [];
 	if (cmd.args) {
 		for (let i = 0; i < cmd.args.length; ++i) {
-			let opt = itn.options.get(cmd.args[i][1]);
+			let opt = this.options.get(cmd.args[i][1]);
 			if (opt) {
 				switch (opt.type) {
 					case 6: // dc.USER
@@ -386,88 +415,92 @@ client.on("interactionCreate", async itn => {
 						break;
 				}
 				if (i[3] && opt.length && opt.length === 0) {
-					itn.errorreply(`Missing argument \`${cmd.args[i][1]}\``);
+					this.errorreply(`Missing argument \`${cmd.args[i][1]}\``);
 					return;
 				}
 				args.push(opt);
 			} else {
 				if (i[3]) {
-					itn.errorreply(`Missing argument \`${cmd.args[i][1]}\``);
+					this.errorreply(`Missing argument \`${cmd.args[i][1]}\``);
 					return;
 				}
 				args.push(undefined);
 			}
 		};
 	}
-	if (cmd.hide && itn.inGuild()) {
-		itn.reply({ content: "-" }); // allow actuall replies, only hiding the initial "bot is thinking" and subsequent error
-		await itn.deleteReply();
+	if (cmd.hide && this.inGuild()) {
+		this.reply({ content: "-" }); // allow actuall replies, only hiding the initial "bot is thinking" and subsequent error
+		await this.deleteReply();
 	};
-	cmd.func.bind(itn)(args);		
+	cmd.func.bind(this)(args);		
 });
 
-client.on("messageCreate", async msg => {
-	currentmsg = msg;
-	if (msg.author.bot) return; // ignore bots
-	if (msg.author.system) return; // ignore system msgs (when they happen)
-	if (msg.author.discriminator === "0000") return; // ignore webhooks
-	if (msg.content[0] !== conf.main.prefix) return;
-	let index = msg.content.indexOf(" ");
+client.hooks.add("messageCreate", Infinity, async function() {
+	currentmsg = this;
+	this.author.isNotPerson = (
+		this.author.bot || // bots
+		this.author.system || // system msgs
+		this.author.discriminator === "0000" // webhooks
+	);
+	this.embedreply   = client._embedreply;
+	this.webhookreply = client._webhookreply;
+	this.errorreply   = client._errorreply;
+});
+
+client.hooks.add("messageCreate", 0, async function() {
+	if (this.author.isNotPerson) return;
+	if (this.content[0] !== conf.main.prefix) return;
+	let index = this.content.indexOf(" ");
 	let cmd;
 	if (index === -1) {
-		msg.cmdname = msg.content.slice(1);
-		msg.content = "";
+		this.cmdname = this.content.slice(1);
+		this.content = "";
 	} else { 
-		msg.cmdname = msg.content.slice(1, index);
-		msg.content = msg.content.slice(index + 1);
+		this.cmdname = this.content.slice(1, index);
+		this.content = this.content.slice(index + 1);
 	}
-	msg.cmdname = msg.cmdname.toLowerCase();
-	if (!client.cmds[msg.cmdname]) { // use fuzzy match
-		msg.cmdname = util.levdisclosest(Object.keys(client.cmds), msg.cmdname, 3);
-		if (!msg.msgname) return; // nothing near to it
+	this.cmdname = this.cmdname.toLowerCase();
+	if (!client.cmds[this.cmdname]) { // use fuzzy match
+		this.cmdname = util.levdisclosest(Object.keys(client.cmds), this.cmdname, 3);
+		if (!this.msgname) return; // nothing near to it
 	}
-	cmd = client.cmds[msg.cmdname];
-
-	msg.embedreply   = client._embedreply;
-	msg.webhookreply = client._webhookreply;
-	msg.errorreply   = client._errorreply;
-	log.info(`cmd ${msg.author.tag}: ${msg.cmdname} ${msg.content}`);
-
-	if (conf.main.admins.indexOf(msg.author.id) === -1) {
+	cmd = client.cmds[this.cmdname];
+	log.info(`cmd ${this.author.tag}: ${this.cmdname} ${this.content}`);
+	if (conf.main.admins.indexOf(this.author.id) === -1) {
 		if (cmd.admin) {
 			msg.errorreply("You need to be bot admin to use this command");
 			return;
 		}
-		if (msg.inGuild()) {
+		if (this.inGuild()) {
 			if (cmd.perm && !msg.member.permissions.has(cmd.perm)) {
-				msg.errorreply("You are missing permissions:\n\`" + new dc.PermissionsBitField(cmd.perms & ~msg.member.permissions.bitfield).toArray().join("\`, \`") + "\`");
+				this.errorreply("You are missing permissions:\n\`" + new dc.PermissionsBitField(cmd.perms & ~this.member.permissions.bitfield).toArray().join("\`, \`") + "\`");
 				return;
 			}
 		} else if (cmd.dm === false) {
-			msg.errorreply("This command cannot be used in DMs");
+			this.errorreply("This command cannot be used in DMs");
 			return;	
 		}
-	} else if (cmd.dm === false && !msg.inGuild()) {
-		msg.errorreply("This command cannot be used in DMs");
+	} else if (cmd.dm === false && !this.inGuild()) {
+		this.errorreply("This command cannot be used in DMs");
 		return;	
 	}
 		
 	if (cmd.args) {
-		if (msg.content.length === 0) {
-			msg.content = [];
+		if (this.content.length === 0) {
+			this.content = [];
 		} else {
-			msg.content = msg.content.split(/(?<=[^\\]) /g);
-			for (let i = 0; i < msg.content.length; ++i)
-				msg.content[i] = msg.content[i].replace(/\\ /g, " ");
+			this.content = this.content.split(/(?<=[^\\]) /g);
+			for (let i = 0; i < this.content.length; ++i)
+				this.content[i] = this.content[i].replace(/\\ /g, " ");
 		}
-		if (msg.content.length > cmd.args.length && cmd.args.at(-1)[0] !== dc.BIGTEXT) {
-			msg.errorreply("Too many arguments");
+		if (this.content.length > cmd.args.length && cmd.args.at(-1)[0] !== dc.BIGTEXT) {
+			this.errorreply("Too many arguments");
 			return;
 		}
 		for (let i = 0; i < cmd.args.length; ++i) {
-			if (msg.content[i] === undefined) {
+			if (this.content[i] === undefined) {
 				if (cmd.args[i][3]) { // if required
-					msg.errorreply(`Missing argument \`${cmd.args[i][1]}\``);
+					this.errorreply(`Missing argument \`${cmd.args[i][1]}\``);
 					return;
 				}
 				continue;
@@ -475,86 +508,84 @@ client.on("messageCreate", async msg => {
 			switch (cmd.args[i][0]) {
 				case dc.USER:
 					let user;
-					let id = msg.content[i].match(/[0-9]+/);
+					let id = this.content[i].match(/[0-9]+/);
 					if (id) {
 						id = id[0];
 						try {
-							user = await msg.guild.members.fetch(id);
+							user = await this.guild.members.fetch(id);
 						} catch (e) {
 							if (cmd.dm) {
 								try {
 									user = await client.users.fetch(id);
-								} catch (e) {
-
-								}
+								} catch (e) { }
 							}
 						}
 					}
 					if (!user) {
-						if (msg.channel.members) {
+						if (this.channel.members) {
 							user = util.levdisuserclosest(
-								msg.channel.members,
-								msg.content[i],
+								this.channel.members,
+								this.content[i],
 								3
 							);
 						} else {
 							user = util.levdisuserclosest(
-								[ client.user, msg.author ],
-								msg.content[i],
+								[ client.user, this.author ],
+								this.content[i],
 								3
 							);
 						}
 					}
 					if (!user) {
-						msg.errorreply("Invalid user");
+						this.errorreply("Invalid user");
 						return;
 					}
-					msg.content[i] = user;
+					this.content[i] = user;
 					break;
 				case dc.BIGTEXT:
-					msg.content[i] = msg.content.slice(i).join(" ");
+					this.content[i] = this.content.slice(i).join(" ");
 					break;
 				case dc.CHOICE:
-					msg.content[i] = msg.content[i].toLowerCase();
-					if (cmd.args[i][4].indexOf(msg.content[i]) === -1) {
-						msg.content[i] = util.levdisclosest(cmd.args[i][4], msg.content[i], 3);
-						if (msg.content[i] === undefined) { // nothing near to it
-							msg.errorreply(`Invalid choice \`${msg.content[i]}\` for \`${cmd.args[i][1]}\`, valid options are:\n\`` + cmd.args[i][4].join("\`, \`") + "\`"); // "
+					this.content[i] = this.content[i].toLowerCase();
+					if (cmd.args[i][4].indexOf(this.content[i]) === -1) {
+						this.content[i] = util.levdisclosest(cmd.args[i][4], msg.content[i], 3);
+						if (this.content[i] === undefined) { // nothing near to it
+							this.errorreply(`Invalid choice \`${this.content[i]}\` for \`${cmd.args[i][1]}\`, valid options are:\n\`` + cmd.args[i][4].join("\`, \`") + "\`"); // "
 							return;
 						}
 					}
 					break;
 				case dc.INT:
-					msg.content[i] = Math.round(msg.content[i]);
+					this.content[i] = Math.round(msg.content[i]);
 				case dc.NUM:
-					msg.content[i] = Number(msg.content[i]);
-					if (isNaN(msg.content[i])) {
-						msg.errorreply(`Invalid integer for \`${cmd.args[i][1]}\``);
+					this.content[i] = Number(msg.content[i]);
+					if (isNaN(this.content[i])) {
+						this.errorreply(`Invalid integer for \`${cmd.args[i][1]}\``);
 						return;
 					}
 					if (
-						(cmd.args[i][4] && cmd.args[i][4] > msg.content[i]) ||
-						(cmd.args[i][5] && cmd.args[i][5] < msg.content[i])
+						(cmd.args[i][4] && cmd.args[i][4] > this.content[i]) ||
+						(cmd.args[i][5] && cmd.args[i][5] < this.content[i])
 					) {
 						if (cmd.args[i][4]) {
 							if (cmd.args[i][5]) {
-								msg.errorreply(`Invalid integer (must be imbetween ${cmd.args[i][4]} and ${cmd.args[i][5]}) for \`${cmd.args[i][1]}\``);
+								this.errorreply(`Invalid integer (must be imbetween ${cmd.args[i][4]} and ${cmd.args[i][5]}) for \`${cmd.args[i][1]}\``); // TODO integer !== number
 							} else {
-								msg.errorreply(`Invalid integer (must be above ${cmd.args[i][4]}) for \`${cmd.args[i][1]}\``);
+								this.errorreply(`Invalid integer (must be above ${cmd.args[i][4]}) for \`${cmd.args[i][1]}\``);
 							}
 						} else {
-							msg.errorreply(`Invalid integer (must be below ${cmd.args[i][5]}) for \`${cmd.args[i][1]}\``);
+							this.errorreply(`Invalid integer (must be below ${cmd.args[i][5]}) for \`${cmd.args[i][1]}\``);
 						}
 						return;
 					}
 					break;
 			}
 		}
-		if (cmd.hide && msg.inGuild()) msg.delete();
-		cmd.func.bind(msg)(msg.content);
+		if (cmd.hide && this.inGuild()) this.delete();
+		cmd.func.bind(this)(this.content);
 	} else {
-		if (cmd.hide && msg.inGuild()) msg.delete();
-		cmd.func.bind(msg)([]);
+		if (cmd.hide && this.inGuild()) this.delete();
+		cmd.func.bind(this)([]);
 	}
 });
 
