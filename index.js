@@ -1,21 +1,17 @@
 #!/usr/bin/env node
 
 // Log
-
 global.log = (m) => {
-	log.raw("D", 34, m);
+	log.raw(36, m);
 };
-log.raw = (t, c, m) => {
-	console.log(`\x1b[${c}m${t}:\x1b[0m ${m}`);
+log.raw = (c, m) => {
+	console.log(`\x1b[${c}m[${log.time()}]\x1b[0m ${m}`);
 }
-log.info = (m) => {
-	log.raw("I", 36, m);
-};
 log.warn = (m) => {
-	log.raw("W", 33, m);
+	log.raw(33, m);
 };
 log.error = (m) => {
-	log.raw("E", 31, m);
+	log.raw(31, m);
 };
 log.fake = (...m) => {
 	let out = "";
@@ -26,8 +22,17 @@ log.fake = (...m) => {
 	console.log(...m)
 	process.stdout.write = old;
 	return out;
-}
+};
+log.time = () => {
+	const d = new Date();
+	return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDay() + 1).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}.${String(d.getSeconds()).padStart(2, "0")}`
+};
 
+// Check working dir
+if (__dirname !== process.cwd()) {
+	log.warn(`You are not running "${__filename}" in it's directory, changing automatically`);
+	process.chdir(__dirname);
+}
 
 // Config
 
@@ -130,7 +135,7 @@ util.levdisuserclosest = (l, v, t) => {
 };
 
 // A fetch function using http (usefull when fetch refuses to work and when fetch isn't available)
-util.fetch = async function(url) {
+util.fetch = function(url) {
 	return new Promise((resolve, reject) => {
 		http.get(url, res => {
 			if (res.statusCode !== 200) {
@@ -274,7 +279,7 @@ client._webhookreply = async function(user, msg) {
 // Hooks
 client.hooks = {};
 client.hooks.add = (event, priority, func) => {
-	log.info(`Registered hook for ${event}, priority: ${priority}`);
+	log(`Registered hook for ${event}, priority: ${priority}`);
 	if (priority === undefined)
 		priority | -Infinity
 	func.priority = priority;
@@ -311,7 +316,7 @@ client.cogs.load = (name) => {
 	}
 	if (!conf[name])
 		conf[name] = {};
-	log.info(`Loaded cog ${name}`);
+	log(`Loaded cog ${name}`);
 }
 fs.readdirSync("./cogs/").forEach(i => {
 	client.cogs.load(i);
@@ -324,7 +329,7 @@ client.hooks.add("ready", 0, async function() {
 				name: conf.main.activity
 			}],
 		});
-	log.info(`Ready as ${client.user.tag}`);
+	log(`Ready as ${client.user.tag}`);
 	let commands = [];
 	Object.keys(client.cmds).forEach(i => {
 		if (i.admin) return;
@@ -389,7 +394,7 @@ client.hooks.add("ready", 0, async function() {
 		dc.Routes.applicationCommands(client.user.id),
 		{ body: commands }
 	);
-	log.info(`Commands pushed`);
+	log("Commands pushed");
 });
 
 client.hooks.add("interactionCreate", 0, async function() {
@@ -400,7 +405,7 @@ client.hooks.add("interactionCreate", 0, async function() {
 	this.embedreply = client._embedreply;
 	this.errorreply = client._errorreply;
 	this.webhookreply = client._webhookreply;
-	log.info(`slashcmd ${this.user.tag}: ${this.commandName}`);
+	log(`slashcmd ${this.user.tag}: ${this.commandName}`);
 	const args = [];
 	if (cmd.args) {
 		for (let i = 0; i < cmd.args.length; ++i) {
@@ -465,7 +470,7 @@ client.hooks.add("messageCreate", 0, async function() {
 		if (!this.msgname) return; // nothing near to it
 	}
 	cmd = client.cmds[this.cmdname];
-	log.info(`cmd ${this.author.tag}: ${this.cmdname} ${this.content}`);
+	log(`cmd ${this.author.tag}: ${this.cmdname} ${this.content}`);
 	if (conf.main.admins.indexOf(this.author.id) === -1) {
 		if (cmd.admin) {
 			msg.errorreply("You need to be bot admin to use this command");
@@ -592,7 +597,6 @@ client.hooks.add("messageCreate", 0, async function() {
 client.login(conf.main.token);
 
 // Error handling
-
 let currentmsg;
 process.on("uncaughtException", e => {
 	switch (e.code) {
@@ -617,3 +621,7 @@ process.on("uncaughtException", e => {
 		msg: `\`\`\`${e}: ${e.stack}\`\`\``
 	});
 });
+
+// REPL
+if (require.main === module)
+	require("repl").start();

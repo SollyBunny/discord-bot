@@ -49,7 +49,7 @@ This is mostly for internal use. The types of arguments are `dc.TEXT`, `dc.BIGTE
 `util.levdis(a: String, b: String) => dis: Integer`: Get the levenhtein distance between two strings  
 `util.levdisclosest(list: List<String>, target: String, cutoff: Integer) => List<String>`: Sort a list by `levdis` to a `target` (items further than `cutoff` are removed)  
 `util.levdisuserclosest(list: List<User / GuildMember>, target: String, cutoff: Integer) => List<String>`: Sort a list of users by `levdis` to a `target` (items further than `cutoff` are removed)  
-`async util.fetch(url: String) => String`: A url fetching tool when bultin fetch and http don't work  
+`util.fetch(url: String) => Promise<String>`: A url fetching tool when bultin fetch and http don't work  
 
 ### Client
 Where all client related shenanigans is stored, refer to (docs)[https://discord.js.org/#/docs/discord.js/main/class/Client] for more info  
@@ -122,7 +122,7 @@ As a reminder, the arg types are `dc.TEXT`, `dc.BIGTEXT`, `dc.INT`, `dc.NUM`, `d
 In the command function, `this` refers to the (message)[https://discord.js.org/#/docs/discord.js/main/class/Message], (interaction)[https://discord.js.org/#/docs/discord.js/main/class/CommandInteraction] object with some extras.  
 These extras are:
 `this.author.isNotPerson`: Whether the author is a bot, system or webhook message or just a user  
-`async this.embedreply(Object {<opts>}) => undefined`: Send an embed reply  
+`async this.embedreply(Object<opts>) => undefined`: Send an embed reply  
 `async this.errorreply(msg: String) => undefined`: A shorthand for an error message embedreply  
 `async this.webhookreply(user: dc.GuildMember, msg: String) => undefined`: Send a message as a different user (sends a message in DMs)  
 
