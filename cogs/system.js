@@ -8,16 +8,15 @@ Config:
 }
 */
 
-if (conf.system.helptext)
-	conf.system.helptext = conf.system.helptext.replaceAll("$prefix", conf.main.prefix);
-else 
-	conf.system.helptext = "No help text set!";
+if (conf.system.helptext) conf.system.helptext = conf.system.helptext.replaceAll("$prefix", conf.main.prefix);
+else conf.system.helptext = "No help text set!";
 
 module.exports.hooks = [
 	{
 		event: "messageCreate",
 		priority: 10,
 		func: async function() {
+			if (this.author.isNotPerson) return;
 			if (this.content !== client.user.toString()) return;
 			this.embedreply({
 				title: "Help",

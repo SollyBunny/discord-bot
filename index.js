@@ -251,7 +251,7 @@ client._errorreply = async function(msg) {
 };
 
 client._webhookreply = async function(user, msg) {
-	if (user.nickname !== null && !user.nickname) {
+	if (user.nickname !== null && user.nickname !== undefined) {
 		this.reply(msg); // TODO find some way to alert the user of the inability of webhooks in DMs
 		return;
 	}
@@ -449,7 +449,7 @@ client.hooks.add("messageCreate", Infinity, async function() {
 
 client.hooks.add("messageCreate", 0, async function() {
 	if (this.author.isNotPerson) return;
-	if (this.content[0] !== conf.main.prefix) return;
+	if (!this.content.startsWith(conf.main.prefix)) return;
 	let index = this.content.indexOf(" ");
 	let cmd;
 	if (index === -1) {

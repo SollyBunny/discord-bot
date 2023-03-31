@@ -3,7 +3,7 @@ Version 2 of a cog based framework for discord.js bots
 
 ## Features
 * Ping bot for help
-* Modulur cog system
+* Modulur cog / hook system
 * Bootifull embed UI
 * Automatic slash command builder
 * Automatic help builder

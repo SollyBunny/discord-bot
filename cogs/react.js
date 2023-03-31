@@ -20,7 +20,7 @@ conf.react.dadchance = conf.react.dadchance || 1;
 module.exports.hooks = [
 	{
 		event: "messageCreate",
-		priority: -10,
+		priority: 10,
 		func: async function() {
 			if (this.author.isNotPerson) return;
 			this.content = this.content.toLowerCase();
