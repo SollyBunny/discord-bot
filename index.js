@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 // Log
+
 global.log = (m) => {
 	log.raw(36, m);
 };
@@ -29,6 +30,7 @@ log.time = () => {
 };
 
 // Check working dir
+
 if (__dirname !== process.cwd()) {
 	log.warn(`You are not running "${__filename}" in it's directory, changing automatically`);
 	process.chdir(__dirname);
@@ -561,11 +563,10 @@ client.hooks.add("messageCreate", 0, async function() {
 					}
 					break;
 				case dc.INT:
-					this.content[i] = Math.round(msg.content[i]);
-				case dc.NUM:
-					this.content[i] = Number(msg.content[i]);
-					if (isNaN(this.content[i])) {
-						this.errorreply(`Invalid integer for \`${cmd.args[i][1]}\``);
+					try {
+						this.content[i] = Math.round(this.content[i]);
+					} catch (e) {
+						this.errorreply(`Invalid Integer for \`${cmd.args[i][1]}\``);
 						return;
 					}
 					if (
@@ -573,13 +574,29 @@ client.hooks.add("messageCreate", 0, async function() {
 						(cmd.args[i][5] && cmd.args[i][5] < this.content[i])
 					) {
 						if (cmd.args[i][4]) {
-							if (cmd.args[i][5]) {
-								this.errorreply(`Invalid integer (must be imbetween ${cmd.args[i][4]} and ${cmd.args[i][5]}) for \`${cmd.args[i][1]}\``); // TODO integer !== number
-							} else {
-								this.errorreply(`Invalid integer (must be above ${cmd.args[i][4]}) for \`${cmd.args[i][1]}\``);
-							}
+							if (cmd.args[i][5]) this.errorreply(`Invalid Integer (must be imbetween ${cmd.args[i][4]} and ${cmd.args[i][5]}) for \`${cmd.args[i][1]}\``);
+							else                this.errorreply(`Invalid Integer (must be above ${cmd.args[i][4]}) for \`${cmd.args[i][1]}\``);
 						} else {
-							this.errorreply(`Invalid integer (must be below ${cmd.args[i][5]}) for \`${cmd.args[i][1]}\``);
+							this.errorreply(`Invalid Integer (must be below ${cmd.args[i][5]}) for \`${cmd.args[i][1]}\``);
+						}
+						return;
+					}
+					break;
+				case dc.NUM:
+					this.content[i] = Number(msg.content[i]);
+					if (isNaN(this.content[i])) {
+						this.errorreply(`Invalid Number for \`${cmd.args[i][1]}\``);
+						return;
+					}
+					if (
+						(cmd.args[i][4] && cmd.args[i][4] > this.content[i]) ||
+						(cmd.args[i][5] && cmd.args[i][5] < this.content[i])
+					) {
+						if (cmd.args[i][4]) {
+							if (cmd.args[i][5]) this.errorreply(`Invalid Number (must be imbetween ${cmd.args[i][4]} and ${cmd.args[i][5]}) for \`${cmd.args[i][1]}\``);
+							else                this.errorreply(`Invalid Number (must be above ${cmd.args[i][4]}) for \`${cmd.args[i][1]}\``);
+						} else {
+							this.errorreply(`Invalid Number (must be below ${cmd.args[i][5]}) for \`${cmd.args[i][1]}\``);
 						}
 						return;
 					}

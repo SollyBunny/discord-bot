@@ -2,5 +2,5 @@
 while true
 do
 	node ./index.js
-	echo "Restarting webserver"
+	echo "Restarting bot"
 done

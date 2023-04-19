@@ -167,7 +167,8 @@ module.exports.cmds = {
 		func: async function (args) {
 			try {
 				await this.channel.bulkDelete(args[0] + 1)
-			} catch {
+			} catch (e) {
+				throw e;
 				this.errorreply("Purge failed");
 			}
 		}

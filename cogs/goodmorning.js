@@ -80,13 +80,12 @@ function stndrd(n) {
 async function weathertoday(location) {
 	let data;
 	try {
-		data = await ffetch(`https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${encodeURIComponent(location)}/next1days?unitGroup=metric&elements=datetime%2Clatitude%2Clongitude%2Ctemp%2Cfeelslike%2Chumidity%2Cprecip%2Cprecipprob%2Cwindspeed%2Cwinddir%2Cpressure%2Ccloudcover%2Cvisibility%2Csevererisk%2Csunrise%2Csunset%2Cmoonphase%2Cdescription%2Cicon&include=days&key=${conf.visualcrossingkey}&options=nonulls&contentType=json`);
+		data = await util.fetch(`https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${encodeURIComponent(location)}/next1days?unitGroup=metric&elements=datetime%2Clatitude%2Clongitude%2Ctemp%2Cfeelslike%2Chumidity%2Cprecip%2Cprecipprob%2Cwindspeed%2Cwinddir%2Cpressure%2Ccloudcover%2Cvisibility%2Csevererisk%2Csunrise%2Csunset%2Cmoonphase%2Cdescription%2Cicon&include=days&key=${conf.goodmorning.visualcrossingkey}&options=nonulls&contentType=json`);
 		data = JSON.parse(data);
 	} catch (e) {
 		return {
-			title: "Error",
-			msg: `Location "\`${location}\`" not found`,
-			color: [255, 0, 0]
+			msg: `Unable to fetch location "\`${location}\`"`,
+			color: [0, 255, 255]
 		};
 	}
 	return {
@@ -157,22 +156,28 @@ function t2222() {
 	});
 }
 
-client.once("ready", async function() {
-	for (let i = 0; i < conf.goodmorning.dailybully.length; ++i) {
-		if (
-			(conf.goodmorning.dailybully[i] = await client.channels.fetch(conf.goodmorning.dailybully[i])) === undefined
-		) continue;
-		conf.goodmorning.dailybully[i].embedreply = client._embedreply;
+module.exports.hooks = [
+	{
+		event: "ready",
+		priority: -10,
+		func: async function() {
+			for (let i = 0; i < conf.goodmorning.dailybully.length; ++i) {
+				if (
+					(conf.goodmorning.dailybully[i] = await client.channels.fetch(conf.goodmorning.dailybully[i])) === undefined
+				) continue;
+				conf.goodmorning.dailybully[i].embedreply = client._embedreply;
+			}
+			for (let i = 0; i < conf.goodmorning.goodmorning.length; ++i) {
+				if (
+					(conf.goodmorning.goodmorning[i][0] = await client.channels.fetch(conf.goodmorning.goodmorning[i][0])) === undefined
+				) continue;
+				conf.goodmorning.goodmorning[i][0].embedreply = client._embedreply;
+			}
+			cron.schedule("0 7 * * *", t0700);
+			cron.schedule("22 22 * * *", t2222);
+		}
 	}
-	for (let i = 0; i < conf.goodmorning.goodmorning.length; ++i) {
-		if (
-			(conf.goodmorning.goodmorning[i][0] = await client.channels.fetch(conf.goodmorning.goodmorning[i][0])) === undefined
-		) continue;
-		conf.goodmorning.goodmorning[i][0].embedreply = client._embedreply;
-	}
-	cron.schedule("0 7 * * *", t0700);
-	cron.schedule("22 22 * * *", t2222);
-});
+];
 
 module.exports.cmds = {
 	"quote": {
