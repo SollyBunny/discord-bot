@@ -259,13 +259,8 @@ module.exports.cmds = {
 			
 			const proc = childprocess.spawn("git", ["pull"]);
 			let out = "";
-			childProcess.stdout.on("data", data => {
-				out += data;
-			});
-			childProcess.stderr.on("data", data => {
-				out += data;
-			});
-
+			proc.stdout.on("data", data => { out += data });
+			proc.stderr.on("data", data => { out += data });
 			this.embedreply({
 				"msg": `Git pull complete!\n${out}`
 			});

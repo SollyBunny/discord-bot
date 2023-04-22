@@ -33,8 +33,7 @@ Both `fs` and `http`s are included
 
 ### Custom log
 When possible use the custom `log` global instead of `console.log`, here are the functions available:  
-`log(msg: String) => undefined`: Print a debug msg  
-`log.info(msg: String) => undefined`: Print an info msg  
+`log(msg: String) => undefined`: Print a msg  
 `log.warn(msg: String) => undefined`: Print a warn msg  
 `log.error(msg: String) => undefined`: Print an error msg  
 `log.fake(...args: *) => String`: Same arguments as `console.log`, outputs the string which woud've been printed (includes escape codes) (don't use this) (ever)  
@@ -57,14 +56,15 @@ Where all client related shenanigans is stored, refer to (docs)[https://discord.
 `client.cogs`: Paths of loaded cogs  
 `client.hooks`: All hooks  
 Here are some functions!  
-`client.cogs.load(name: String) => undefined` Load a cog  
-`client.hooks.add(event: String, priority: Number, func: async function => Boolean) => undefined` Add a hook  
+`client.cogs.load(name: String) => undefined` Load a cog (extention name included)  
+`client.cogs.unload(name: String) => undefined` Unload a cog (extention name included)  
+`client.hooks.add({event: String, priority: Number, func: async function => Boolean}) => undefined` Add a hook  
+`client.hooks.sub({event: String, priority: Number, func: async function => Boolean}) => undefined` Sub a hook  
 
 ## Cogs
 Cogs can be found in `./cogs/*.js`, this is the format of a cog  
 ```js
 /* cogname.js
-<what I does>
 Config
 "cogname": {
 	"name": <value>
@@ -72,6 +72,8 @@ Config
 Requires
 nop: provide an actuall reason for this library to exist, I'm serious go onto npm, search nop, and tell me why this exists and why 42 other libraries depend on LITERALLY NOTHING whilst having FIVE THOUSAND, THREE HUNDRED AND FORTY SIX WEEKLY DOWNLODS. LIKE I CAN WRITE THIS CODE RIGHT HERE RIGHT NOW, 3, 2, 1, function nop(){}, wow i DID IT AAAAGH
 */
+
+module.exports.desc = "<what I does>"; // optional
 
 module.exports.hooks = { // optional
 	...
@@ -81,8 +83,18 @@ module.exports.cmds = { // optional
 	...
 };
 
-// optional
-console.log("Put effects here");
+module.exports.onload = async function() { // optional, runs on cog load
+	// Do all initialization of config and other stuff here
+};
+
+module.exports.onloadready = async function() { // optional, runs on cog load after bot is initialized
+	// Fetch channels, servers, users, etc
+};
+
+module.exports.onunload = async function() { // optional, runs on cog unload
+	// Cleanup any timers, callbacks, etc
+};
+
 ```
 
 ### Commands

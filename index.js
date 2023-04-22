@@ -362,7 +362,7 @@ client.cogs.unload = name => {
 		});
 	if (cog.hooks) cog.hooks.forEach(client.hooks.sub);
 	delete client.cogs[name];
-	delete require.cache[`./cogs/${name}`];
+	delete require.cache[require.resolve(`./cogs/${name}`)];
 	log(`Cog ${name} unloaded`);
 	return true;
 }
