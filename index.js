@@ -368,7 +368,7 @@ client.cogs.unload = name => {
 }
 fs.readdirSync("./cogs/").forEach(client.cogs.load);
 
-client.hooks.add({event: "ready", priority: 0, func: async function() {
+client.hooks.add({event: "ready", func: async function() {
 	if (conf.main.activity)
 		client.user.setPresence({
 			activities: [{ name: conf.main.activity }],
