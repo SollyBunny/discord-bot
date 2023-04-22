@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+global.http = require("https");
+global.fs   = require("fs");
+
 // Log
 
 global.log = (m) => {
@@ -38,15 +41,25 @@ if (__dirname !== process.cwd()) {
 
 // Config
 
-global.conf = require("./conf.json");
+function confload() {
+
+	global.conf = JSON.parse(fs.readFileSync("./conf.json"));
+
+	conf.main = conf.main || {};
+	conf.main.prefix = conf.main.prefix || "!";
+	conf.main.admins = conf.main.admins || [];
+	conf.main.errcolor = conf.main.errcolor || [255, 0, 0]
+
+	conf.reload = confload;
+
+}
+
+confload();
+
 if (!conf.main.token) {
 	log.error("I need a token please!");
 	process.exit(1);
 }
-conf.main = conf.main || {};
-conf.main.prefix = conf.main.prefix || "!";
-conf.main.admins = conf.main.admins || [];
-conf.main.errcolor = conf.main.errcolor || [255, 0, 0]
 
 // Util
 
@@ -88,7 +101,7 @@ util.levdis = (a, b) => {
 // Get the closest value to a target by levdis, cutoff t
 util.levdisclosest = (l, v, t) => {
 	let min_s = undefined;
-	let min_d = Infinity;
+	let min_d = Number.MAX_SAFE_INTEGER;
 	let d;
 	for (let i = 0; i < l.length; ++i) {
 		d = util.levdis(l[i], v);
@@ -156,8 +169,6 @@ util.fetch = function(url) {
 
 // Modules
 
-global.http = require("https");
-global.fs   = require("fs");
 global.dc   = require("discord.js");
 
 dc.TEXT    = 0;
@@ -280,20 +291,31 @@ client._webhookreply = async function(user, msg) {
 
 // Hooks
 client.hooks = {};
-client.hooks.add = (event, priority, func) => {
-	log(`Registered hook for ${event}, priority: ${priority}`);
-	if (priority === undefined)
-		priority | -Infinity
-	func.priority = priority;
-	if (client.hooks[event] === undefined) { // init event hook
-		client.on(event, client.hooks.run.bind(event));
-		client.hooks[event] = [func];
+client.hooks.ID = 0;
+client.hooks.add = hook => { // TODO error checking
+	hook.ID = client.hooks.ID;
+	client.hooks.ID += 1;
+	hook.priority = hook.priority || 0;
+	hook.func.priority = hook.priority;
+	if (client.hooks[hook.event] === undefined) { // init event hook
+		client.on(hook.event, client.hooks.run.bind(hook.event));
+		client.hooks[hook.event] = [hook.func];
 		return;
 	}
 	let i = 0;
-	for (; i < client.hooks[event].length; ++i)
-		if (priority > client.hooks[event][i].priority) break;
-	client.hooks[event].splice(i, 0, func);
+	for (; i < client.hooks[hook.event].length; ++i)
+		if (hook.priority > client.hooks[hook.event][i].priority) break;
+	client.hooks[hook.event].splice(i, 0, hook.func);
+	log(`Hook added ${hook.event} (${hook.priority})`);
+};
+client.hooks.sub = hook => {
+	log(`Hook subbed ${hook.event} (${hook.priority})`);
+	let i = 0;
+	for (; i < client.hooks[hook.event].length; ++i) {
+		if (client.hooks[hook.event].ID === hook.ID) break;
+	}
+	client.hooks[hook.event].splice(i, 1);
+	// TODO unregister event hook on zero hooks left
 };
 client.hooks.run = async function(arg) { // must be a function for this to work
 	for (let i = 0; i < client.hooks[this].length; ++i)
@@ -302,34 +324,54 @@ client.hooks.run = async function(arg) { // must be a function for this to work
 
 // Cogs
 client.cmds = {};
-client.cogs = [];
-client.cogs.load = (name) => {
-	client.cogs.push(name);
-	let cog = require(`./cogs/${name}`); // TODO make this configurable
-	if (cog.cmds) {
+client.cogs = {};
+client.cogs.load = name => {
+	if (client.cogs[name]) {
+		log.warn(`Cog \`${name}\` already loaded`);
+		return false;
+	}
+	const cog = require(`./cogs/${name}`); // TODO make this configurable
+	client.cogs[name] = cog;
+	if (cog.cmds)
 		Object.keys(cog.cmds).forEach(i => {
 			client.cmds[i] = cog.cmds[i];
 		});
+	if (cog.hooks) cog.hooks.forEach(client.hooks.add);
+	if (!conf[name]) conf[name] = {};
+	if (cog.onload) cog.onload();
+	if (cog.onloadready) {
+		if (client.isReady())
+			cog.onloadready();
+		else
+			client.once("ready", cog.onloadready);
 	}
-	if (cog.hooks) {
-		cog.hooks.forEach(i => {
-			client.hooks.add(i.event, i.priority, i.func);
-		});
-	}
-	if (!conf[name])
-		conf[name] = {};
-	log(`Loaded cog ${name}`);
+	log(`Cog ${name} loaded`);
+	return true;
 }
-fs.readdirSync("./cogs/").forEach(i => {
-	client.cogs.load(i);
-});
+client.cogs.unload = name => {
+	cog = client.cogs[name];
+	if (!cog) {
+		log.warn(`Cog ${name} not loaded`);
+		return false;
+	}
+	if (typeof(a) === "function") return false; // Prevent functions in the client.cogs obj to be unloaded
+	if (cog.onunload) cog.onunload();
+	if (cog.cmds)
+		Object.keys(cog.cmds).forEach(i => {
+			delete client.cmds[i];
+		});
+	if (cog.hooks) cog.hooks.forEach(client.hooks.sub);
+	delete client.cogs[name];
+	delete require.cache[`./cogs/${name}`];
+	log(`Cog ${name} unloaded`);
+	return true;
+}
+fs.readdirSync("./cogs/").forEach(client.cogs.load);
 
-client.hooks.add("ready", 0, async function() {
+client.hooks.add({event: "ready", priority: 0, func: async function() {
 	if (conf.main.activity)
 		client.user.setPresence({
-			activities: [{
-				name: conf.main.activity
-			}],
+			activities: [{ name: conf.main.activity }],
 		});
 	log(`Ready as ${client.user.tag}`);
 	let commands = [];
@@ -397,9 +439,9 @@ client.hooks.add("ready", 0, async function() {
 		{ body: commands }
 	);
 	log("Commands pushed");
-});
+}});
 
-client.hooks.add("interactionCreate", 0, async function() {
+client.hooks.add({event: "interactionCreate", func: async function() {
 	currentmsg = this;
 	if (!this.isCommand()) return;
 	const cmd = client.cmds[this.commandName]
@@ -440,9 +482,9 @@ client.hooks.add("interactionCreate", 0, async function() {
 		await this.deleteReply();
 	};
 	cmd.func.bind(this)(args);		
-});
+}});
 
-client.hooks.add("messageCreate", Infinity, async function() {
+client.hooks.add({event: "messageCreate", priority: Infinity, func: async function() {
 	currentmsg = this;
 	this.author.isNotPerson = (
 		this.author.bot || // bots
@@ -452,9 +494,9 @@ client.hooks.add("messageCreate", Infinity, async function() {
 	this.embedreply   = client._embedreply;
 	this.webhookreply = client._webhookreply;
 	this.errorreply   = client._errorreply;
-});
+}});
 
-client.hooks.add("messageCreate", 0, async function() {
+client.hooks.add({event: "messageCreate", func: async function() {
 	if (this.author.isNotPerson) return;
 	if (!this.content.startsWith(conf.main.prefix)) return;
 	let index = this.content.indexOf(" ");
@@ -609,7 +651,7 @@ client.hooks.add("messageCreate", 0, async function() {
 		if (cmd.hide && this.inGuild()) this.delete();
 		cmd.func.bind(this)([]);
 	}
-});
+}});
 
 client.login(conf.main.token);
 

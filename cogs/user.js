@@ -1,6 +1,6 @@
-/* user.js
-Find info about your friends
-*/
+/* user.js */
+
+module.exports.desc = "Find info about your friends";
 
 module.exports.cmds = {
 	"profile": {

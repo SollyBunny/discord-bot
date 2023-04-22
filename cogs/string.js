@@ -1,3 +1,4 @@
+/* string.js */
 
 const replace = {
 	"upper": {
@@ -261,6 +262,8 @@ function replacefunc(s) {
 	return text;
 }
 
+module.exports.desc = "String substitution";
+
 module.exports.hooks = [
 	{
 		event: "messageCreate",
@@ -286,4 +289,4 @@ module.exports.cmds = {
 			});
 		}
 	}
-}
+};

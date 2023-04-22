@@ -1,6 +1,4 @@
 /* say.js
-Trolling.inc
-
 Config:
 "say": {
 	"stickers": {
@@ -10,8 +8,11 @@ Config:
 }
 */
 
-const predict = require("./predict.json");
 const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ !?*(),.#\"\'\n".split("");
+
+let welsh;
+
+module.exports.desc = "Trolling.inc";
 
 module.exports.cmds = {
 	"sticker": {
@@ -35,7 +36,7 @@ module.exports.cmds = {
 			while (1) {
 				ran = Math.random();
 				for (i = 0; i < chars.length; ++i)
-					if (predict[prevchar][i] > ran) break;
+					if (welsh[prevchar][i] > ran) break;
 				if (i === chars.length) break;
 				out += chars[i];
 				prevchar = chars[i];
@@ -69,4 +70,10 @@ module.exports.cmds = {
 			this.webhookreply(args[0] || this.member, args[1] || "");
 		}
 	}
+};
+
+module.exports.onload = async function() {
+	
+	welsh = JSON.parse(fs.readFileSync("./data/welsh.json"));
+
 };

@@ -1,6 +1,4 @@
 /* system.js
-Interal bot commands which can't be put into the main program
-
 Config:
 "system": {
 	"color": [r, g, b],
@@ -8,8 +6,9 @@ Config:
 }
 */
 
-if (conf.system.helptext) conf.system.helptext = conf.system.helptext.replaceAll("$prefix", conf.main.prefix);
-else conf.system.helptext = "No help text set!";
+const childprocess = require("child_process");
+
+module.exports.desc = "Interal bot commands which can't be put into the main program";
 
 module.exports.hooks = [
 	{
@@ -172,5 +171,111 @@ module.exports.cmds = {
 				this.errorreply("Purge failed");
 			}
 		}
+	},
+	"cogload": {
+		desc: "Load a cog",
+		args: [
+			[dc.TEXT, "name", "Name of cog to load", true]
+		],
+		admin: true,
+		func: async function (args) {
+			args = args[0].toLowerCase();
+			if (client.cogs.load(args))
+				this.embedreply({
+					"msg": `Cog \`${args}\` loaded!`
+				});
+			else
+				this.embedreply({
+					"msg": `Cog \`${args}\` already loaded`
+				});
+		}
+	},
+	"cogunload": {
+		desc: "Unload a cog",
+		args: [
+			[dc.TEXT, "name", "Name of cog to unload", true]
+		],
+		admin: true,
+		func: async function (args) {
+			args = args[0].toLowerCase();
+			if (client.cogs.unload(args))
+				this.embedreply({
+					"msg": `Cog \`${args}\` unloaded!`
+				});
+			else
+				this.embedreply({
+					"msg": `Cog \`${args}\` not loaded`
+				});
+		}
+	},
+	"cogreload": {
+		desc: "Reload a cog",
+		args: [
+			[dc.TEXT, "name", "Name of cog to reload", true]
+		],
+		admin: true,
+		func: async function (args) {
+			args = args[0].toLowerCase();
+			let out;
+			out = client.cogs.unload(args);
+			out |= client.cogs.load(args);
+			if (out)
+				this.embedreply({
+					"msg": `Cog \`${args}\` reloaded!`
+				});
+			else
+				this.embedreply({
+					"msg": `Cog \`${args}\` not reloaded`
+				});
+		}
+	},
+	"coglist": {
+		desc: "List all loaded cogs",
+		func: async function () {
+			this.embedreply({
+				"msg": Object.keys(client.cogs).map(i => {
+					if (typeof(client.cogs[i]) === "function") return undefined;
+					return `\`${i}\`: ${client.cogs[i].desc}`;
+				}).filter(i => i).join("\n")
+			});
+		}
+	},
+	"reset": {
+		desc: "Reload config and all cogs",
+		admin: true,
+		func: async function () {
+			conf.reload();
+			Object.keys(client.cogs).forEach(client.cogs.unload);
+			fs.readdirSync("./cogs/").forEach(client.cogs.load);
+			this.embedreply({
+				"msg": `Reset complete!`
+			});
+		}
+	},
+	"gitpull": {
+		desc: "Pull changes from git",
+		admin: true,
+		func: async function () {
+			
+			const proc = childprocess.spawn("git", ["pull"]);
+			let out = "";
+			childProcess.stdout.on("data", data => {
+				out += data;
+			});
+			childProcess.stderr.on("data", data => {
+				out += data;
+			});
+
+			this.embedreply({
+				"msg": `Git pull complete!\n${out}`
+			});
+		}
 	}
 };
+
+module.exports.onstart = async function() {
+	if (conf.system.helptext)
+		conf.system.helptext = conf.system.helptext.replaceAll("$prefix", conf.main.prefix);
+	else
+		conf.system.helptext = "No help text set!";
+}

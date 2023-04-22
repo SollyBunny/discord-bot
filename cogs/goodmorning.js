@@ -1,5 +1,4 @@
 /* goodmorning.js
-Handles time based functions
 
 Config:
 "goodmorning": {
@@ -18,37 +17,9 @@ Requires:
 node-cron
 */
 
-conf.goodmorning.dailybully = conf.goodmorning.dailybully || [];
-conf.goodmorning.goodmorning = conf.goodmorning.goodmorning || [];
-
-conf.goodmorning.days = conf.goodmorning.days || [
-	"Sunday",
-	"Monday",
-	"Tuesday",
-	"Wednesday",
-	"Thursday",
-	"Friday",
-	"Saturday"
-];
-conf.goodmorning.mons = conf.goodmorning.mons || [
-	"January",
-	"Febuary",
-	"March",
-	"April",
-	"May",
-	"June",
-	"July",
-	"August",
-	"September",
-	"October",
-	"November",
-	"December"
-];
-
 const cron = require("node-cron");
-const quotes = require("./goodmorning.json");
 
-let dailyrandomseed = Math.floor(Math.random() * 100000);
+let cron2222, cron0700;
 
 function dailyrandom(l) {
 	return l[dailyrandomseed % l.length]
@@ -156,33 +127,12 @@ function t2222() {
 	});
 }
 
-module.exports.hooks = [
-	{
-		event: "ready",
-		priority: -10,
-		func: async function() {
-			for (let i = 0; i < conf.goodmorning.dailybully.length; ++i) {
-				if (
-					(conf.goodmorning.dailybully[i] = await client.channels.fetch(conf.goodmorning.dailybully[i])) === undefined
-				) continue;
-				conf.goodmorning.dailybully[i].embedreply = client._embedreply;
-			}
-			for (let i = 0; i < conf.goodmorning.goodmorning.length; ++i) {
-				if (
-					(conf.goodmorning.goodmorning[i][0] = await client.channels.fetch(conf.goodmorning.goodmorning[i][0])) === undefined
-				) continue;
-				conf.goodmorning.goodmorning[i][0].embedreply = client._embedreply;
-			}
-			cron.schedule("0 7 * * *", t0700);
-			cron.schedule("22 22 * * *", t2222);
-		}
-	}
-];
+module.exports.desc = "Handles time based functions";
 
 module.exports.cmds = {
 	"quote": {
 		desc: "Get a random inspirational quote",
-		func: async function (args) {
+		func: async function () {
 			let i = Math.floor(Math.random() * quotes.length);
 			this.embedreply({
 				title: `Quote #${i}`,
@@ -203,16 +153,79 @@ module.exports.cmds = {
 	"bully": {
 		desc: "Who's being bullied today",
 		dm: false,
-		func: async function (args) {
+		func: async function () {
 			this.embedreply(dailybully(this.channel));
 		}
 	},
 	"test_cron": {
 		desc: "Run all cron functions now",
 		admin: true,
-		func: async function (args) {
+		func: async function () {
 			t0700();
 			t2222();
 		}
 	}
 };
+
+module.exports.onload = async function() {
+
+	conf.goodmorning.dailybully = conf.goodmorning.dailybully || [];
+	conf.goodmorning.goodmorning = conf.goodmorning.goodmorning || [];
+
+	conf.goodmorning.days = conf.goodmorning.days || [
+		"Sunday",
+		"Monday",
+		"Tuesday",
+		"Wednesday",
+		"Thursday",
+		"Friday",
+		"Saturday"
+	];
+	conf.goodmorning.mons = conf.goodmorning.mons || [
+		"January",
+		"Febuary",
+		"March",
+		"April",
+		"May",
+		"June",
+		"July",
+		"August",
+		"September",
+		"October",
+		"November",
+		"December"
+	];
+
+	quotes = JSON.parse(fs.readFileSync("./data/quotes.json"));
+	dailyrandomseed = Math.floor(Math.random() * 100000);
+
+};
+
+module.exports.onloadready = async function() {
+
+	for (let i = 0; i < conf.goodmorning.dailybully.length; ++i) {
+		if (
+			(conf.goodmorning.dailybully[i] = await client.channels.fetch(conf.goodmorning.dailybully[i])) !== undefined
+		) continue;
+		conf.goodmorning.dailybully[i].embedreply = client._embedreply;
+	}
+	conf.goodmorning.dailybully.filter(i => { return i === undefined; });
+	for (let i = 0; i < conf.goodmorning.goodmorning.length; ++i) {
+		if (
+			(conf.goodmorning.goodmorning[i][0] = await client.channels.fetch(conf.goodmorning.goodmorning[i][0])) === undefined
+		) continue;
+		conf.goodmorning.goodmorning[i][0].embedreply = client._embedreply;
+	}
+	conf.goodmorning.goodmorning.filter(i => { return i !== undefined; });
+
+	cron0700 = cron.schedule("0 7 * * *", t0700);
+	cron2222 = cron.schedule("22 22 * * *", t2222);
+
+}
+
+module.exports.onunload = async function() {
+
+	cron0700.destroy();
+	cron2222.destroy();
+
+}

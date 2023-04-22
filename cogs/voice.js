@@ -1,12 +1,11 @@
 /* voice.js
-A music bot!
-
 Requires:
 @discordjs/voice
 ytdl-core
 */
 
 const voice = require("@discordjs/voice");
+const { AutoModerationRuleEventType } = require("discord.js");
 const ytdl = require("ytdl-core");
 
 const ALREADYINCHANNEL = 0;
@@ -46,6 +45,8 @@ class Ctx {
 		
 	}
 }
+
+module.exports.desc = "A music bot!";
 
 module.exports.cmds = {
 	"play": {

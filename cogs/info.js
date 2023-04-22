@@ -1,6 +1,4 @@
-/* info.js
-Fetches stuff from the interwebs
-*/
+/* info.js */
 
 const wikiurl1 = "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageprops&ppprop=disambiguation&generator=search&gsrinterwiki=1&gsrsearch=";
 const wikiurl2 = "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts%7Cpageimages&exintro=1&explaintext=1&exsectionformat=plain&piprop=original&exchars=1000&pageids=";
@@ -10,7 +8,19 @@ const nekosurl = "https://nekos.life/api/v2/img/"
 const nekosopts2 = ["why", "emoticon", "fact", "name"];
 const nekosurl2 = "https://nekos.life/api/v2/";
 
+module.exports.desc = "Fetches stuff from the interwebs";
+
 module.exports.cmds = {
+	"test_gimg": {
+		desc: "Fetch images from google images",
+		args: [
+			[dc.BIGTEXT, "text", "What to search", false]
+		],
+		func: async function (args) {
+	
+
+		}
+	},
 	"neko": {
 		desc: "Cute nekos",
 		args: [

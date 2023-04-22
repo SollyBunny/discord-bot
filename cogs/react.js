@@ -1,6 +1,4 @@
 /* react.js
-React to what people say
-
 Config:
 "react": {
 	"gametext": "<the game!>",
@@ -11,11 +9,7 @@ Config:
 }
 */
 
-conf.react.gametext = conf.react.gametext || "The game!";
-conf.react.dadname = conf.react.dadname || "Dad";
-conf.react.dadtext = conf.react.dadtext || "Hi, $x, I'm $y!";
-conf.react.dadtext = conf.react.dadtext.replaceAll("$y", conf.react.dadname);
-conf.react.dadchance = conf.react.dadchance || 1;
+module.exports.desc = "React to what people say";
 
 module.exports.hooks = [
 	{
@@ -45,3 +39,13 @@ module.exports.hooks = [
 		}
 	}
 ];
+
+module.exports.onstart = async function() {
+	
+	conf.react.gametext = conf.react.gametext || "The game!";
+	conf.react.dadname = conf.react.dadname || "Dad";
+	conf.react.dadtext = conf.react.dadtext || "Hi, $x, I'm $y!";
+	conf.react.dadtext = conf.react.dadtext.replaceAll("$y", conf.react.dadname);
+	conf.react.dadchance = conf.react.dadchance || 1;
+
+}

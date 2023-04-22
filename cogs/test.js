@@ -1,6 +1,6 @@
-/* test.js
-Janky normally admin only commands
-*/
+/* test.js */
+
+module.exports.desc = "Janky normally admin only commands";
 
 module.exports.cmds = {
 	"test_levdis": {
@@ -92,9 +92,9 @@ module.exports.cmds = {
 				channel.permissionOverwrites.create(
 					args[1],
 					{
-						 'SEND_MESSAGES': true,
- 'EMBED_LINKS': null,
- 'ATTACH_FILES': false,
+						'SEND_MESSAGES': true,
+						'EMBED_LINKS': null,
+						'ATTACH_FILES': false,
 						/*
 						"CREATE_INSTANT_INVITE": false,
 						"KICK_MEMBERS": false,
