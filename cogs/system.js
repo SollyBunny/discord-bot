@@ -101,7 +101,7 @@ module.exports.cmds = {
 						title: args[0][0].toUpperCase() + args[0].slice(1),
 						msg: msg,
 						fields: args[1].args.map(i => {
-							let value = `${i[2]} (${dc.typename(i[0])})`;
+							let value = `${i[2]} (${dc.typename[i[0]]})`;
 							if (i[3]) value += " (required)";
 							return {
 								name: i[1],

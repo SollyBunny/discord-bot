@@ -20,7 +20,7 @@ Help for configuration for other cogs can be found at the top of their files
 ### Main config
 `token`: The discord token to use (also known as OAuth2 Client Secret)  
 `prefix`: The command prefix to use  
-`admins`: List of string IDs of admins  
+`admins`: Array of string IDs of admins  
 `activity`: Activity text of the bot  
 
 ###### This next part is for developers :)
@@ -41,13 +41,13 @@ When possible use the custom `log` global instead of `console.log`, here are the
 ### Discord.js
 Discord.js is included as `dc` with added parts  
 #### Argument types
-This is mostly for internal use. The types of arguments are `dc.TEXT`, `dc.BIGTEXT`, `dc.INT`, `dc.NUM`, `dc.USER`, `dc.ROLE`, `dc.BOOL`, `dc.CHOICE`. You can get a string name for these using  
-`dc.typename(n: Enum) => String`: Convert an argument type to a string
+This is mostly for internal use. The types of arguments are `dc.TEXT`, `dc.BIGTEXT`, `dc.INT`, `dc.NUM`, `dc.USER`, `dc.ROLE`, `dc.BOOL`, `dc.CHOICE`.  
+You can get a string name for these using `dc.typename[dc.XXX]`.  
 
 ### Util
 `util.levdis(a: String, b: String) => dis: Integer`: Get the levenhtein distance between two strings  
-`util.levdisclosest(list: List<String>, target: String, cutoff: Integer) => List<String>`: Sort a list by `levdis` to a `target` (items further than `cutoff` are removed)  
-`util.levdisuserclosest(list: List<User / GuildMember>, target: String, cutoff: Integer) => List<String>`: Sort a list of users by `levdis` to a `target` (items further than `cutoff` are removed)  
+`util.levdisclosest(array: Array<String>, target: String, cutoff: Integer) => Array<String>`: Sort a array by `levdis` to a `target` (items further than `cutoff` are removed)  
+`util.levdisuserclosest(array: Array<User / GuildMember>, target: String, cutoff: Integer) => Array<String>`: Sort an array of users by `levdis` to a `target` (items further than `cutoff` are removed)  
 `util.fetch(url: String) => Promise<String>`: A url fetching tool when bultin fetch and http don't work  
 
 ### Client
@@ -56,7 +56,9 @@ Where all client related shenanigans is stored, refer to (docs)[https://discord.
 `client.cogs`: Paths of loaded cogs  
 `client.hooks`: All hooks  
 Here are some functions!  
-`client.cogs.load(name: String) => undefined` Load a cog (extention name included)  
+`async client.cmds.serialize() => Array<Command>` Turn the commands in `client.cmds` into a single object which can be accepted by the discord API  
+`async client.cmds.push(Array<Command>)` Push commands to the discord API  
+`client.cogs.load(name: String) => bool | undefined` Load a cog, bool represents whether the cog was loaded, an undefined means theres an error preventing the cog from loading (doesn't exist / disabled) (extention name included)  
 `client.cogs.unload(name: String) => undefined` Unload a cog (extention name included)  
 `client.hooks.add({event: String, priority: Number, func: async function => Boolean}) => undefined` Add a hook  
 `client.hooks.sub({event: String, priority: Number, func: async function => Boolean}) => undefined` Sub a hook  
@@ -72,6 +74,8 @@ Config
 Requires
 nop: provide an actuall reason for this library to exist, I'm serious go onto npm, search nop, and tell me why this exists and why 42 other libraries depend on LITERALLY NOTHING whilst having FIVE THOUSAND, THREE HUNDRED AND FORTY SIX WEEKLY DOWNLODS. LIKE I CAN WRITE THIS CODE RIGHT HERE RIGHT NOW, 3, 2, 1, function nop(){}, wow i DID IT AAAAGH
 */
+
+module.exports.disabled = false; // optional
 
 module.exports.desc = "<what I does>"; // optional
 
@@ -111,7 +115,7 @@ Here are some extra options
 `admin`: Whether user must be an admin (in `conf.main.admins`)  
 `dm`: Whether this command can be used in DMs or not  
 `hide`: Whether the calling of this command is hidden  
-`args`: List of arguments (look below for more info)  
+`args`: Array of arguments (look below for more info)  
   
 Here is the format for the argument param  
 ```js
@@ -129,7 +133,7 @@ args: [
 ```
 As a reminder, the arg types are `dc.TEXT`, `dc.BIGTEXT`, `dc.INT`, `dc.NUM`, `dc.USER`, `dc.ROLE`, `dc.BOOL`, `dc.CHOICE`. There are also some extra items for certain arg types  
 `dc.INT` / `dc.NUM` 2 more arguments `min` and `max` can be specified  
-`dc.CHOICE`: another argument of a list must be specified with the different things this argument can be  
+`dc.CHOICE`: another argument of an array must be specified with the different things this argument can be  
   
 In the command function, `this` refers to the (message)[https://discord.js.org/#/docs/discord.js/main/class/Message], (interaction)[https://discord.js.org/#/docs/discord.js/main/class/CommandInteraction] object with some extras.  
 These extras are:
@@ -143,8 +147,8 @@ Here is an explanation of the most complicated given function, and as such I'm g
 async this.embedreply(Object<{
 	msg: String
 	title: String
-	color: List<Integer>
-	fields: List<Object<{
+	color: Array<Integer>
+	fields: Array<Object<{
 		name: String,
 		value: String
 	}>>
