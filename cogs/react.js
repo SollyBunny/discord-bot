@@ -40,7 +40,7 @@ module.exports.hooks = [
 	}
 ];
 
-module.exports.onstart = async function() {
+module.exports.onload = async function() {
 	
 	conf.react.gametext = conf.react.gametext || "The game!";
 	conf.react.dadname = conf.react.dadname || "Dad";

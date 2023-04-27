@@ -16,10 +16,11 @@ const replace = {
 	"stupid": {
 		desc: "Alternate between upper and lowercase",
 		func: s => {
+			console.log("HEllo")
 			s = s.split("");
 			let flag = false;
 			for (let i = 0; i < s.length; ++i) {
-				if (" \r\n\t".indexOf(s[i])) continue;
+				if (" \r\n\t".indexOf(s[i]) !== -1) continue;
 				if (flag === true) {
 					s[i] = s[i].toUpperCase();
 					flag = false;

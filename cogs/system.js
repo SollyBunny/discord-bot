@@ -268,7 +268,7 @@ module.exports.cmds = {
 	}
 };
 
-module.exports.onstart = async function() {
+module.exports.onload = async function() {
 	if (conf.system.helptext)
 		conf.system.helptext = conf.system.helptext.replaceAll("$prefix", conf.main.prefix);
 	else
