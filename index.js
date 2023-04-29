@@ -442,8 +442,10 @@ client.hooks.add({event: "interactionCreate", func: async function() {
 		};
 	}
 	if (cmd.hide && this.inGuild()) {
-		this.reply({ content: "-" }); // allow actuall replies, only hiding the initial "bot is thinking" and subsequent error
+		await this.deferReply();
 		await this.deleteReply();
+		//this.reply({ content: "-" }); // allow actuall replies, only hiding the initial "bot is thinking" and subsequent error
+		//await this.deleteReply();
 	};
 	cmd.func.bind(this)(args);		
 }});

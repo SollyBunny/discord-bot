@@ -13,7 +13,7 @@ module.exports.cmds = {
 		desc: "Harvest messages",
 		admin: true,
 		args: [
-			[dc.TEXT, "ID", "ID of the message to start from", false]
+			[dc.TEXT, "id", "ID of the message to start from", false]
 		],
 		func: async function (args) {
 			args = args[0] || undefined;
