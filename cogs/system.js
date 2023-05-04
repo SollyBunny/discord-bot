@@ -164,11 +164,13 @@ module.exports.cmds = {
 		perm: dc.PermissionFlagsBits.ManageMessages,
 		dm: false,
 		func: async function (args) {
-			try {
-				await this.channel.bulkDelete(args[0] + 1)
-			} catch (e) {
-				throw e;
-				this.errorreply("Purge failed");
+			let msgs = await this.channel.bulkDelete(args[0] + 1, true); // true will not throw error on msgs older than 14 days
+			if (msgs.size < args[0] + 1) {
+				args[0] -= msgs.size;
+				// fetch the remaining msgs
+				msgs = await this.channel.messages.fetch({ limit: args[0] });
+				// delete em
+				msgs.forEach(i => i.delete());
 			}
 		}
 	},

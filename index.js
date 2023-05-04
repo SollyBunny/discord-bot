@@ -212,21 +212,22 @@ global.fs   = require("fs");
 			});
 		};
 		client._webhookreply = async function(user, msg) {
-			if (user.nickname !== null && user.nickname !== undefined) {
-				this.reply(msg); // TODO find some way to alert the user of the inability of webhooks in DMs
+			if (user.nickname === undefined) {
+				this.channel.send(msg); // TODO find some way to alert the user of the inability of webhooks in DMs
 				return;
 			}
 			let webhook = await this.channel.createWebhook({
-				name: user.nickname || user.username || user.user.username,
+				name: user.nickname || user.user.username,
 				channel: this.channel,
 				avatar: user.rawAvatarURL || user.avatarURL() || user.user.avatarURL()
 			});
 			await webhook.send({
 				content: msg,
-				username: user.nickname || user.username || user.user.username,
+				username: user.nickname || user.user.username,
 				allowedMentions: {
 					"users" : [],
-					"roles" : []
+					"roles" : [],
+					"channels" : []
 				}
 			});
 			await webhook.delete();

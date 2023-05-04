@@ -204,16 +204,22 @@ module.exports.onload = async function() {
 module.exports.onloadready = async function() {
 
 	for (let i = 0; i < conf.goodmorning.dailybully.length; ++i) {
-		if (
-			(conf.goodmorning.dailybully[i] = await client.channels.fetch(conf.goodmorning.dailybully[i])) !== undefined
-		) continue;
+		try {
+			conf.goodmorning.dailybully[i] = await client.channels.fetch(conf.goodmorning.dailybully[i])
+		} catch (e) {
+			conf.goodmorning.dailybully[i] = undefined;
+			continue;
+		}
 		conf.goodmorning.dailybully[i].embedreply = client._embedreply;
 	}
 	conf.goodmorning.dailybully.filter(i => { return i === undefined; });
 	for (let i = 0; i < conf.goodmorning.goodmorning.length; ++i) {
-		if (
-			(conf.goodmorning.goodmorning[i][0] = await client.channels.fetch(conf.goodmorning.goodmorning[i][0])) === undefined
-		) continue;
+		try {
+			conf.goodmorning.goodmorning[i][0] = await client.channels.fetch(conf.goodmorning.goodmorning[i][0])
+		} catch (e) {
+			conf.goodmorning.goodmorning[i][0] = undefined;
+			continue;
+		}
 		conf.goodmorning.goodmorning[i][0].embedreply = client._embedreply;
 	}
 	conf.goodmorning.goodmorning.filter(i => { return i !== undefined; });
@@ -221,11 +227,9 @@ module.exports.onloadready = async function() {
 	cron0700 = cron.schedule("0 7 * * *", t0700);
 	cron2222 = cron.schedule("22 22 * * *", t2222);
 
-}
+};
 
 module.exports.onunload = async function() {
-
 	cron0700.destroy();
 	cron2222.destroy();
-
-}
+};
