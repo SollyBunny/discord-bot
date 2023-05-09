@@ -50,7 +50,6 @@ module.exports.cmds = {
 		func: async function (args) {
 			if (!args[0]) {
 				this.embedreply({
-					title: "Help",
 					msg: conf.system.helptext,
 					color: conf.system.color
 				});
@@ -119,20 +118,20 @@ module.exports.cmds = {
 				}
 				return;
 			}
-			args = isnearlist(Object.keys(client.cmds), args[0], 5);
-			if (args.length === 0) {
+			args = util.levdisclosest(Object.keys(client.cmds), args[0], 5);
+			if (args) {
+				this.embedreply({
+					title: `Help`,
+					msg: `Did you mean:\n\`${args}\``,
+					color: conf.system.color
+				});
+			} else {
 				this.embedreply({
 					title: "Help",
 					msg: "Sorry, I didn't quiet catch that (unknown command)",
 					color: [255, 0, 0]
 				});
-				return;
 			}
-			this.embedreply({
-				title: `Help`,
-				msg: `Did you mean:\n\`${args.join("\`,\`")}\``,
-				color: conf.system.color
-			});
 		}
 	},
 	"uptime": {
@@ -270,9 +269,9 @@ module.exports.cmds = {
 	}
 };
 
-module.exports.onload = async function() {
+module.exports.onloadready = async function() {
 	if (conf.system.helptext)
-		conf.system.helptext = conf.system.helptext.replaceAll("$prefix", conf.main.prefix);
+		conf.system.helptext = conf.system.helptext.replaceAll("$name", client.user.username).replaceAll("$prefix", conf.main.prefix);
 	else
 		conf.system.helptext = "No help text set!";
 }

@@ -1,22 +1,25 @@
 /* string.js */
 
 const replace = {
+	"echo": {
+		desc: "Echo",
+		func: s => s
+	},
 	"upper": {
 		desc: "Make something uppercase",
-		func: s => {
-			return s.toUpperCase();
-		}
+		func: s => s.toUpperCase()
 	},
 	"lower": {
 		desc: "Make something lowercase",
-		func: s => {
-			return s.toLowerCase();
-		}
+		func: s => s.toLowerCase()
+	},
+	"mirror": {
+		desc: "Flip it",
+		func: s => s.split("").reverse().join("")
 	},
 	"stupid": {
 		desc: "Alternate between upper and lowercase",
 		func: s => {
-			console.log("HEllo")
 			s = s.split("");
 			let flag = false;
 			for (let i = 0; i < s.length; ++i) {
@@ -30,12 +33,6 @@ const replace = {
 				}
 			}
 			return s.join("");
-		}
-	},
-	"mirror": {
-		desc: "Flip it",
-		func: s => {
-			return s.split("").reverse().join("");
 		}
 	},
 	"greek": {
@@ -145,6 +142,23 @@ const replace = {
    			out = out.slice(0, -2); // remove tailing ", "
    			return out;
    		}
+	},
+	"zalgo": {
+		desc: "Zalgo text",
+		func: s => {
+			let out = "";
+			let rand;
+			for (let i = 0; i < s.length; ++i) {
+				out += s[i];
+				if (" \r\n\t".indexOf(s[i]) !== -1) continue;
+				while (1) {
+					rand = Math.random();
+					out += String.fromCharCode(Math.floor(Math.random() * (879 - 768 + 1)) + 768)
+					if (rand > 0.7) break;
+				}
+			}
+			return out;
+		}
 	},
 	"uwu": {
 		desc: "M-mwakes t-tis text c-cwute an cuwdlwee!!!1!!",
@@ -273,7 +287,7 @@ module.exports.hooks = [
 			if (this.author.isNotPerson) return;
 			const newcontent = this.content.replace(/\$[a-zA-Z]+\{.+?\}/gs, replacefunc);
 			if (newcontent === this.content) return;
-			this.webhookreply(this.author, newcontent);
+			this.webhookreply(this.member || this.author, newcontent);
 			this.delete();
 		}
 	}

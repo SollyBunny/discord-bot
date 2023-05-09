@@ -10,7 +10,7 @@ module.exports.cmds = {
 	"element": {
 		desc: "Fetch an element by number or name",
 		args: [
-			[dc.BIGTEXT, "element", "Number or name of element", true],
+			[dc.BIGTEXT, "element", "Number or name of element", true, undefined, 50],
 		],
 		func: async function (args) {
 			args = args[0].toLowerCase();

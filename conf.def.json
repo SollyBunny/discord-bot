@@ -3,7 +3,8 @@
 		"token": "<token>",
 		"prefix": "!",
 		"admins": ["<your id here>"],
-		"activity": "I'm a bot"
+		"activity": "I'm a bot",
+		"error": "<channel>"
 	},
 	"system": {
 		"color": [128, 128, 128],
@@ -16,12 +17,12 @@
 		],
 		"goodmorning": [
 			["<channel>", "location"]
-		],
+		]
 	},
 	"say": {
 		"stickers": {
-			"<sticker name>": "<sticker url>",
-			"<sticker name>": "<sticker url>"
+			"<sticker name 1>": "<sticker url>",
+			"<sticker name 2>": "<sticker url>"
 		}
 	},
 	"react": {

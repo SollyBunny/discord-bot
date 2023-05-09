@@ -14,7 +14,7 @@ module.exports.cmds = {
 	"test_gimg": {
 		desc: "Fetch images from google images",
 		args: [
-			[dc.BIGTEXT, "text", "What to search", false]
+			[dc.BIGTEXT, "text", "What to search", false, undefined, 50]
 		],
 		func: async function (args) {
 	
@@ -58,7 +58,7 @@ module.exports.cmds = {
 	"wiki": {
 		desc: "Find an entry in the world's largest encyclopedia",
 		args: [
-			[dc.BIGTEXT, "text", "What to find", true],
+			[dc.BIGTEXT, "text", "What to find", true, undefined, 100],
 		],
 		func: async function (args) {
 			args = args[0].toLowerCase();

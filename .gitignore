@@ -1,5 +1,6 @@
+package-lock.json
 conf.json
 node_modules
 node_modules/*
-package-lock.json
-data/harvest/*
+data/harvest/*.out
+data/harvest/data/*

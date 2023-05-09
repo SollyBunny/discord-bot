@@ -1,0 +1,15 @@
+{
+	"title": "Truth",
+	"color": [0, 255, 0],
+	"data": [
+		{
+			"id": 0,
+			"author": "admin",
+			"content": "Who do you like here the most",
+			"added": 1683494113785,
+			"score": 0,
+			"vote": 0,
+			"dnr": 0
+		}
+	]
+}
