@@ -35,16 +35,16 @@ global.fs   = require("fs");
 	log.fake = (...m) => {
 		let out = "";
 		const old = process.stdout.write;
-		process.stdout.write = (a, b, c) => {
+		process.stdout.write = a => {
 			out += a;
 		};
-		console.log(...m)
+		console.log(...m);
 		process.stdout.write = old;
 		return out;
 	};
 	log.time = () => {
 		const d = new Date();
-		return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDay() + 1).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}.${String(d.getSeconds()).padStart(2, "0")}`
+		return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDay() + 1).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}.${String(d.getSeconds()).padStart(2, "0")}`;
 	};
 }
 { // Util
