@@ -37,12 +37,12 @@ When possible use the custom `log` global instead of `console.log`, here are the
 `log.warn(msg: String) => undefined`: Print a warn msg  
 `log.error(msg: String) => undefined`: Print an error msg  
 `log.fake(...args: *) => String`: Same arguments as `console.log`, outputs the string which woud've been printed (includes escape codes) (don't use this) (ever)  
-
+`log.time() => String`: Return the current time as a string  (internal)  
+`log.raw(color: Integer, msg: String)`: Print a message with a colored timestamp (internal)  
 ### Discord.js
 Discord.js is included as `dc` with added parts  
 #### Argument types
-This is mostly for internal use. The types of arguments are `dc.TEXT`, `dc.BIGTEXT`, `dc.INT`, `dc.NUM`, `dc.USER`, `dc.ROLE`, `dc.BOOL`, `dc.CHOICE`.  
-You can get a string name for these using `dc.typename[dc.XXX]`.  
+This is used in command arguments. The types are in `dc.XXX`. You can get a string name for these using `dc.typename[dc.XXX]`.  
 
 ### Util
 `util.levdis(a: String, b: String) => dis: Integer`: Get the levenhtein distance between two strings  
@@ -58,7 +58,7 @@ Where all client related shenanigans is stored, refer to (docs)[https://discord.
 Here are some functions!  
 `async client.cmds.serialize() => Array<Command>` Turn the commands in `client.cmds` into a single object which can be accepted by the discord API  
 `async client.cmds.push(Array<Command>)` Push commands to the discord API  
-`client.cogs.load(name: String) => bool | undefined` Load a cog, bool represents whether the cog was loaded, an undefined means theres an error preventing the cog from loading (doesn't exist / disabled) (extention name included)  
+`client.cogs.load(name: String) => Boolean | undefined` Load a cog, a bool return value represents whether the cog was loaded, an undefined means theres an error preventing the cog from loading (doesn't exist / disabled) (extention name included)  
 `client.cogs.unload(name: String) => undefined` Unload a cog (extention name included)  
 `client.hooks.add({event: String, priority: Number, func: async function => Boolean}) => undefined` Add a hook  
 `client.hooks.sub({event: String, priority: Number, func: async function => Boolean}) => undefined` Sub a hook  
@@ -72,7 +72,7 @@ Config
 	"name": <value>
 }
 Requires
-nop: provide an actuall reason for this library to exist, I'm serious go onto npm, search nop, and tell me why this exists and why 42 other libraries depend on LITERALLY NOTHING whilst having FIVE THOUSAND, THREE HUNDRED AND FORTY SIX WEEKLY DOWNLODS. LIKE I CAN WRITE THIS CODE RIGHT HERE RIGHT NOW, 3, 2, 1, function nop(){}, wow i DID IT AAAAGH
+nop: to do something useless
 */
 
 module.exports.disabled = false; // optional
@@ -99,6 +99,11 @@ module.exports.onunload = async function() { // optional, runs on cog unload
 	// Cleanup any timers, callbacks, etc
 };
 
+// NOT IMPLEMNTED
+module.exports.tick = async function() { // optional, runs every ~5m
+	// Save any data, do random tasks, etc
+};
+
 ```
 
 ### Commands
@@ -116,28 +121,38 @@ Here are some extra options
 `dm`: Whether this command can be used in DMs or not  
 `hide`: Whether the calling of this command is hidden  
 `args`: Array of arguments (look below for more info)  
-  
-Here is the format for the argument param  
 ```js
 args: [
-	[dc.TEXT, "channel", "Name of channel", true],
+	// A string
+	[dc.TEXT, "name", "Mother's maiden name", true, 5, 20],
+	// Either true or false (NOT IMPLEMENTED)
+	[dc.BOOL, "violence", "Whether violence should be used", true]
+	// A whole number
+	[dc.INT, "bet", "How much money to bet", false, 100],
+	// A(n) (un)whole number
+	[dc.NUMBER, "chance", "ID of the server", false, -3.2, 5],
+	// A user in the channel (found first by ID then by a fuzzy search)
 	[dc.USER, "user", "User to make immortal", false],
-	[dc.INT, "server", "ID of the server", false]
+	// A role in the channel (NOT IMPLEMENTED)
+	[dc.ROLE, "role", "Role to allow", true],
+	// A channel in the server (NOT IMPLEMENTED)
+	[dc.CHANNEL, "channel", "Channel to nuke", true],
+	// A server the bot is in (NOT IMPLEMENTED)
+	[dc.SERVER, "Server", "Gift location", true],
+	// Same as text but must be one of these options (fuzzy search used)
+	[dc.CHOICE, "animal", "Fav animal", true, ["Cat", "Dog", "Perry the Platypus"]]
+	// Text not seperated by spaces (must come last)
+	[dc.BIGTEXT, "prompt", "Prompt for AI", true, undefined, 200],
 ]
-```  
-And the format
-```js
+// General format:
 args: [
-	[dc.TYPEOFARG, "name", "Description", <required>]
+	[dc.TYPEOFARG: Enum, "name": String, "Description": String, required: Boolean, min: Number, max: Number]
 ]
 ```
-As a reminder, the arg types are `dc.TEXT`, `dc.BIGTEXT`, `dc.INT`, `dc.NUM`, `dc.USER`, `dc.ROLE`, `dc.BOOL`, `dc.CHOICE`. There are also some extra items for certain arg types  
-`dc.INT` / `dc.NUM` 2 more arguments `min` and `max` can be specified  
-`dc.CHOICE`: another argument of an array must be specified with the different things this argument can be  
-  
-In the command function, `this` refers to the (message)[https://discord.js.org/#/docs/discord.js/main/class/Message], (interaction)[https://discord.js.org/#/docs/discord.js/main/class/CommandInteraction] object with some extras.  
+In the command function, `this` refers to the (message)[https://discord.js.org/#/docs/discord.js/main/class/Message] or (interaction)[https://discord.js.org/#/docs/discord.js/main/class/CommandInteraction] object with some extras.  
 These extras are:
 `this.author.isNotPerson`: Whether the author is a bot, system or webhook message or just a user  
+`this.author.isAdmin`: Whether the author is a bot admin (defined in `conf.main.admins`)  
 `async this.embedreply(Object<opts>) => undefined`: Send an embed reply  
 `async this.errorreply(msg: String) => undefined`: A shorthand for an error message embedreply  
 `async this.webhookreply(user: dc.GuildMember, msg: String) => undefined`: Send a message as a different user (sends a message in DMs)  
