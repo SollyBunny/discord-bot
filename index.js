@@ -25,7 +25,7 @@ global.fs   = require("fs");
 	};
 	log.raw = (c, m) => {
 		console.log(`\x1b[${c}m[${log.time()}]\x1b[0m ${m}`);
-	}
+	};
 	log.warn = (m) => {
 		log.raw(33, m);
 	};
