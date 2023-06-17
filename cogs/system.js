@@ -9,7 +9,6 @@ Config:
 const childprocess = require("child_process");
 
 module.exports.desc = "Interal bot commands which can't be put into the main program";
-
 module.exports.hooks = [
 	{
 		event: "messageCreate",

@@ -21,19 +21,19 @@ module.exports.cmds = {
 				out.color = [29, 145, 54];
 				out.image = imgurl + "4.5.jpg";
 				args = undefined;
-			} else if (isNaN(Number(args[0]))) { // name
+			} else if (isNaN(Number(args))) { // name
 				let search = util.levdisclosest(elnames, args, 3);
 				if (search) {
-					els[elnames.indexOf(search)];
+					args = els[elnames.indexOf(search)];
 				} else {
-					out.title = `${args[0].toUpperCase()}${args.slice(1)} \`${args[0].toUpperCase()}${args[1] || ""}\` #\`???\``;
+					out.title = `${args[0].toUpperCase()}${args.slice(1)} \`${args[0].toUpperCase()}${args.slice(1)}\` #\`???\``;
 					out.msg = `A fictional element created and named by <@${this.author.id}>`;
 					args = undefined;
 				}
 			} else { // number
-				args = Math.round(args[0]);
+				args = Math.round(args);
 				if (!els[args]) {
-					out.title = `??? \`??\` #\`${args[0]}\``;
+					out.title = `??? \`??\` #\`${args}\``;
 					out.msg = `An element not yet discovered by scientists`
 					args = undefined;
 				} else {
@@ -42,7 +42,7 @@ module.exports.cmds = {
 			}
 			if (args !== undefined) {
 				out.title = `${args.name} #\`${args.number}\``;
-				out.msg = args.desc;
+				out.msg = args.summary;
 				out.rawcolor = args.color;
 				out.image = imgurl + args.number + ".jpg";
 			}
