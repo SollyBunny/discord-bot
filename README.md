@@ -1,5 +1,5 @@
 # discord-bot
-Version 2 of a cog based framework for discord.js bots  
+Version 2 of a cog-based framework for discord.js bots  
 
 ## Features
 * Ping bot for help
@@ -7,7 +7,7 @@ Version 2 of a cog based framework for discord.js bots
 * Bootifull embed UI
 * Automatic slash command builder
 * Automatic help builder
-* Can infact cook pancakes (discord is lying)
+* Can in fact cook pancakes (Discord is lying to you)
 
 ## Usage
 Run `./run.sh` or `./index.js` with `nodejs`
@@ -26,7 +26,7 @@ Help for configuration for other cogs can be found at the top of their files
 ###### This next part is for developers :)
 
 ## Globals
-Stuff which you can use everywhere
+Stuff that you can use everywhere
 
 ### Modules
 Both `fs` and `http`s are included
@@ -117,7 +117,7 @@ In `module.exports.cmds` you can place any amount of commands in this format
 }
 ```  
 Here are some extra options
-`admin`: Whether user must be an admin (in `conf.main.admins`)  
+`admin`: Whether a user must be an admin (in `conf.main.admins`)  
 `dm`: Whether this command can be used in DMs or not  
 `hide`: Whether the calling of this command is hidden  
 `args`: Array of arguments (look below for more info)  
@@ -157,7 +157,7 @@ These extras are:
 `async this.errorreply(msg: String) => undefined`: A shorthand for an error message embedreply  
 `async this.webhookreply(user: dc.GuildMember, msg: String) => undefined`: Send a message as a different user (sends a message in DMs)  
 
-Here is an explanation of the most complicated given function, and as such I'm going to break it down a bit more. Here is the semi formal syntax for referance  
+Here is an explanation of the most complicated given function, and as such I'm going to break it down a bit more. Here is the semi-formal syntax for reference  
 ```js
 async this.embedreply(Object<{
 	msg: String

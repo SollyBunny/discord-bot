@@ -54,6 +54,6 @@ module.exports.cmds = {
 module.exports.onload = async function() {
 
 	els = JSON.parse(fs.readFileSync("./data/elements.json"));
-	elnames = els.map(i => { return i.name;});
+	elnames = els.map(i => i.name);
 
 };
