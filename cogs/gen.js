@@ -71,7 +71,7 @@ function genfromfile(name) {
 async function gencall(gen, args) {
 	if (args.length === 0) { // get msg
 		const data = gen.get();
-		const msg = `> ${data.content}\n${data.author}`;
+		let msg = `> ${data.content}\n${data.author}`;
 		if      (msg > 0) msg += ` +${data.score}`;
 		else if (msg < 0) msg += ` ${data.score}`; // already has -
 		this.embedreply({

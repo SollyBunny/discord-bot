@@ -410,6 +410,7 @@ client.hooks.add({event: "ready", func: async function() {
 }});
 
 async function setupmsg() {
+	this.author = this.author || this.member || this.user;
 	this.author.isNotPerson = (
 		this.author.bot || // bots
 		this.author.system || // system msgs
@@ -650,4 +651,10 @@ process.on("uncaughtException", e => {
 });
 
 // REPL
-if (require.main === module) require("repl").start();
+if (require.main === module) {
+	const repl = require("repl");
+	if (repl.start)
+		require("repl").start();
+	else
+		log.error("Cannot start repl");
+}

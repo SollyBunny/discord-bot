@@ -285,9 +285,16 @@ module.exports.hooks = [
 		priority: 20,
 		func: async function() {
 			if (this.author.isNotPerson) return;
-			const newcontent = this.content.replace(/\$[a-zA-Z]+\{.+?\}/gs, replacefunc);
-			if (newcontent === this.content) return;
-			this.webhookreply(this.member || this.author, newcontent);
+			if (this.content.indexOf("$") === -1) return;
+			let content = this.content;
+			let oldcontent;
+			while (1) {
+				oldcontent = content;
+				content = content.replace(/\$[a-zA-Z]+\{.+?\}/g, replacefunc);
+				if (content === oldcontent) break;
+			}
+			if (content === this.content) return;
+			this.webhookreply(this.member || this.author, content);
 			this.delete();
 		}
 	}
@@ -305,3 +312,17 @@ module.exports.cmds = {
 		}
 	}
 };
+
+Object.keys(replace).map(i => {
+	module.exports.cmds[i] = {
+		desc: replace[i].desc,
+		args: [
+			[dc.BIGTEXT, "input", `Text to ${i}-ize (this is a filter, use $${i}{<text>} to use inline)`, true, undefined, 50]
+		],
+		func: async function (args) {
+			this.embedreply({
+				msg: replace[i].func(args[0])
+			});
+		}
+	}
+});

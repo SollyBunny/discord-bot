@@ -1,6 +1,6 @@
 #!/bin/sh
 while true
 do
-	node ./index.js
+	bun run --bun ./index.js
 	echo "Restarting bot"
 done
