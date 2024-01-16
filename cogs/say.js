@@ -73,7 +73,7 @@ module.exports.cmds = {
 };
 
 module.exports.onload = async function() {
-	
+
 	welsh = JSON.parse(fs.readFileSync("./data/welsh.json"));
 
 };
