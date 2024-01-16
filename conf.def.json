@@ -8,7 +8,7 @@
 	},
 	"system": {
 		"color": [128, 128, 128],
-		"help": "Hi, the prefix is $prefix"
+		"helptext": "Hi I'm $name :wave:\n\n  • `$prefixhelp <page>` to list cmds :thinking:\n  • Use `$prefixhelp <cmdname>` for usage :sweat:\n  • You can find my sauce [here](https://github.com/sollybunny/discord-bot) :spaghetti:"
 	},
 	"goodmorning": {
 		"visualcrossingkey": "<visualcrossing key>",
