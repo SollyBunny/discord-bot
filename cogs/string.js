@@ -1,6 +1,24 @@
 /* string.js */
 
 const replace = {
+	"rainbow": {
+		desc: "Make rainbow text",
+		func: s => {
+			let x = 0;
+			let y = 0;
+			const colors = [31, 33, 32, 36, 34, 35];
+			out = "";
+			for (const c of s) {
+				if (c === "\n") {
+					y += 1;
+					x = 0;
+				}
+				out += `\x1b[${colors[(y + x) % colors.length]}m${c}`;
+				x += 1;
+			}
+			return `\`\`\`ansi\n${out}\`\`\``;
+		}
+	},
 	"echo": {
 		desc: "Echo",
 		func: s => s
@@ -290,7 +308,7 @@ module.exports.hooks = [
 			let oldcontent;
 			while (1) {
 				oldcontent = content;
-				content = content.replace(/\$[a-zA-Z]+\{.+?\}/g, replacefunc);
+				content = content.replace(/\$[a-z]*?\{((?=([^\{])).)*?\}/gsi, replacefunc);
 				if (content === oldcontent) break;
 			}
 			if (content === this.content) return;
@@ -317,12 +335,10 @@ Object.keys(replace).map(i => {
 	module.exports.cmds[i] = {
 		desc: replace[i].desc,
 		args: [
-			[dc.BIGTEXT, "input", `Text to ${i}-ize (this is a filter, use $${i}{<text>} to use inline)`, true, undefined, 50]
+			[dc.BIGTEXT, "input", `Text to ${i}-ize (this is a filter, use $${i}{<text>} to use inline)`, true, undefined, 100]
 		],
 		func: async function (args) {
-			this.embedreply({
-				msg: replace[i].func(args[0])
-			});
+			this.reply(replace[i].func(args[0]));
 		}
 	}
 });
