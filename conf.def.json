@@ -31,5 +31,8 @@
 		"dadname": "<im dad>",
 		"dadtext": "Hi, $x, I'm $y!",
 		"dadchance": 0.5
+	},
+	"numbat": {
+		"maxseconds": 1
 	}
 }
