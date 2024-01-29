@@ -152,6 +152,18 @@ global.fs   = require("fs");
 		});
 	};
 }
+{ // Temp directory
+	fs.lstat("./temp/", (error, temp) => {
+		if (error) {
+			fs.mkdir("./temp/", error => {
+				if (error)
+					log.error(`Cannot create temp directory: ${error}`);
+			});
+		} else if (temp && !temp.isDirectory()) {
+			log.error("Cannot create temp directory: file exists")
+		}
+	});
+}
 { // Config
 	function confload() {
 		global.conf = JSON.parse(fs.readFileSync("./conf.json"));
