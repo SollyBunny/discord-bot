@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ -z "$node" ]; then
-	if command -v bun &> /dev/null; then
+	if command -v bun > /dev/null; then
 		echo "Using bun"
 		node="bun run --bun --experimental-modules"
 	else
