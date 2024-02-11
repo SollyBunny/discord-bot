@@ -19,10 +19,6 @@ const replace = {
 			return `\`\`\`ansi\n${out}\`\`\``;
 		}
 	},
-	"echo": {
-		desc: "Echo",
-		func: s => s
-	},
 	"upper": {
 		desc: "Make something uppercase",
 		func: s => s.toUpperCase()
