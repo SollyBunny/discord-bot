@@ -33,14 +33,13 @@ module.exports.cmds = {
 			let out = prevchar;
 			let ran;
 			let i;
-			while (1) {
+			while (out.character.length < 100) {
 				ran = Math.random();
 				for (i = 0; i < chars.length; ++i)
 					if (welsh[prevchar][i] > ran) break;
 				if (i === chars.length) break;
 				out += chars[i];
 				prevchar = chars[i];
-				if (out.length > 100) break;
 			}
 			this.webhookreply(this.member, out);
 		}
@@ -48,7 +47,7 @@ module.exports.cmds = {
 	"echo": {
 		desc: "Echo whatever you say",
 		args: [
-			[dc.BIGTEXT, "text", "What to echo", true]
+			[dc.BIGTEXT, "text", "What to echo", true, undefined, 500]
 		],
 		func: async function (args) {
 			try {
@@ -62,12 +61,13 @@ module.exports.cmds = {
 		desc: "Make anyone say anything",
 		args: [
 			[dc.USER, "user", "Who says this", false],
-			[dc.BIGTEXT, "text", "What to say", true],
+			[dc.BIGTEXT, "text", "What to say", true, undefined, 500],
 		],
 		dm: false,
 		hide: true,
 		func: async function (args) {
-			this.webhookreply(args[0] || this.member, args[1] || "");
+			if (!args[1]) return;
+			this.webhookreply(args[0] || this.member, args[1]);
 		}
 	}
 };
