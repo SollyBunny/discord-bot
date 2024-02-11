@@ -252,11 +252,30 @@ module.exports.cmds = {
 			});
 		}
 	},
+	"clearwebhooks": {
+		desc: "Force clearing webhooks",
+		admin: true,
+		func: async function () {
+			const count = await client._webhookclear();
+			this.embedreply({
+				"msg": count === 0 ? "No webhooks cleared" : `${count} webhook${count !== 1 ? "s" : ""} cleared`
+			});
+		}
+	},
+	"dotick": {
+		desc: "Force a tick",
+		admin: true,
+		func: async function () {
+			const count = await client._dotick();
+			this.embedreply({
+				"msg": "Tick sent"
+			});
+		}
+	},
 	"gitpull": {
 		desc: "Pull changes from git",
 		admin: true,
 		func: async function () {
-			
 			const proc = childprocess.spawn("git", ["pull"]);
 			let out = "";
 			proc.stdout.on("data", data => { out += data });
