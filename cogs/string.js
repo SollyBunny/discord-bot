@@ -135,27 +135,27 @@ const replace = {
 		desc: "Encodes text into buffalos only",
 		func: s => {
 			let out = "";
-   			let l;
-   			for (let i = 0; i < s.length; ++i) {
-   				l = s.charCodeAt(i);
-   				if (l >= 97 && l <= 122) { // between 'a' & 'z'
-   					l -= 96; // 'a' - 1
-   				} else if (l >= 65 && l <= 90) { // between 'A' & 'Z'
-   					l -= 64; // 'A' - 1
-   				} else {
-   					out = out.slice(0, -2);
-   					if (s[i] === " ") out += ". ";
+			let l;
+			for (let i = 0; i < s.length; ++i) {
+				l = s.charCodeAt(i);
+				if (l >= 97 && l <= 122) { // between 'a' & 'z'
+					l -= 96; // 'a' - 1
+				} else if (l >= 65 && l <= 90) { // between 'A' & 'Z'
+					l -= 64; // 'A' - 1
+				} else {
+					out = out.slice(0, -2);
+					if (s[i] === " ") out += ". ";
 					else              out += s[i] + ", ";
-   					continue;
-   				}
-   				out += (
-   					("BUFFALO ".repeat(Math.floor(l / 5))) +
-   					("buffalo ".repeat(l % 5))
-   				).slice(0, -1) + ", ";
-   			}
-   			out = out.slice(0, -2); // remove tailing ", "
-   			return out;
-   		}
+					continue;
+				}
+				out += (
+					("BUFFALO ".repeat(Math.floor(l / 5))) +
+					("buffalo ".repeat(l % 5))
+				).slice(0, -1) + ", ";
+			}
+			out = out.slice(0, -2); // remove tailing ", "
+			return out;
+		}
 	},
 	"zalgo": {
 		desc: "Zalgo text",
@@ -298,7 +298,7 @@ module.exports.hooks = [
 		event: "messageCreate",
 		priority: 20,
 		func: async function() {
-			if (this.author.isNotPerson) return;
+			if (util.usernotperson(this.author)) return;
 			if (this.content.indexOf("$") === -1) return;
 			let content = this.content;
 			let oldcontent;

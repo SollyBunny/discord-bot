@@ -69,8 +69,7 @@ module.exports.cmds = {
 					color: [255, 0, 255]
 				});
 			} else {
-				if (args === "emoticon") args = "cat";
-				data = await util.fetch(`${nekosurl2}${args}`);
+				data = await util.fetch(`${nekosurl2}${args === "emoticon" ? "cat" : args}`);
 				data = data.slice(data.indexOf('"', 7) + 1, data.lastIndexOf('"'));
 				args = args.charAt(0).toUpperCase() + args.slice(1).toLowerCase();
 				this.embedreply({

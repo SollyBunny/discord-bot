@@ -13,13 +13,9 @@ Config:
 	"mons": ["mon1", "mon2" ... "mon7"]
 }
 
-Requires:
-node-cron
 */
 
-const cron = require("node-cron");
-
-let cron2222, cron0700;
+let cron, cron2222, cron0700;
 
 function dailyrandom(l) {
 	return l[dailyrandomseed % l.length]
@@ -35,17 +31,6 @@ function dailybully(channel) {
 		color: [128, 5, 5],
 		msg: `<@${members.at(dailyrandomseed % members.size).user.id}> is being bullied today`
 	};
-}
-
-function stndrd(n) {
-	n = n.toString();
-	if (n.at(-2) === "1") return "th";
-	switch (n.at(-1)) {
-		case "1": return "st";
-		case "2": return "nd";
-		case "3": return "rd";
-		default: return "th";
-	}
 }
 
 async function weathertoday(location) {
@@ -113,7 +98,7 @@ function t0700() {
 		let date = new Date();
 		let embed = await weathertoday(i[1]);
 		embed.title = "Good morning";
-		embed.msg = `It is **${conf.goodmorning.days[date.getDay()]}**, the **${date.getDate()}${stndrd(date.getDate())}** of **${conf.goodmorning.mons[date.getMonth()]}**, **${date.getFullYear()}**\n\n > ${dailyrandom(quotes)}\n\n` + embed.msg;
+		embed.msg = `It is **${conf.goodmorning.days[date.getDay()]}**, the **${date.getDate()}${util.stndrd(date.getDate())}** of **${conf.goodmorning.mons[date.getMonth()]}**, **${date.getFullYear()}**\n\n > ${dailyrandom(quotes)}\n\n` + embed.msg;
 		embed.url = undefined;
 		i[0].embedreply(embed);
 	});
@@ -128,6 +113,8 @@ function t2222() {
 }
 
 module.exports.desc = "Handles time based functions";
+
+module.exports.require = { "node-cron": "Set timers" };
 
 module.exports.cmds = {
 	"quote": {
@@ -168,6 +155,8 @@ module.exports.cmds = {
 };
 
 module.exports.onload = async function() {
+
+	cron = require("node-cron");
 
 	conf.goodmorning.dailybully = conf.goodmorning.dailybully || [];
 	conf.goodmorning.goodmorning = conf.goodmorning.goodmorning || [];

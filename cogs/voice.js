@@ -4,9 +4,7 @@ Requires:
 ytdl-core
 */
 
-const voice = require("@discordjs/voice");
-const { AutoModerationRuleEventType } = require("discord.js");
-const ytdl = require("ytdl-core");
+let voice, ytdl;
 
 const ALREADYINCHANNEL = 0;
 
@@ -47,6 +45,14 @@ class Ctx {
 }
 
 module.exports.desc = "A music bot!";
+
+module.exports.require = { "@discordjs/voice": "Interact with discord.js voice", "ytdl-core": "Stream content" };
+module.exports.requireoptional = {}; // TODO (opus and stuff)
+
+module.exports.onload = async function() {
+	ytdl = require("ytdl-core");
+	voice = require("@discordjs/voice");
+};
 
 module.exports.cmds = {
 	"play": {

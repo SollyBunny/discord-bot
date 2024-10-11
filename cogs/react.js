@@ -16,7 +16,7 @@ module.exports.hooks = [
 		event: "messageCreate",
 		priority: 10,
 		func: async function() {
-			if (this.author.isNotPerson) return;
+			if (util.usernotperson(this.author)) return;
 			this.content = this.content.toLowerCase();
 			if (this.content.indexOf("the game") !== -1) {
 				try {

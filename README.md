@@ -76,8 +76,8 @@ Where all client-related shenanigans are stored, refer to [docs](https://discord
 | `client.hooks` | All hooks |
 | `async client.cmds.serialize() => Array<Command>` | Turn the commands in `client.cmds` into a single object which can be accepted by the discord API |
 | `async client.cmds.push(Array<Command>)` | Push commands to the discord API |
-| `client.cogs.load(name: String) => Boolean or undefined` | Load a cog, a bool return value represents whether the cog was loaded, an undefined means theres an error preventing the cog from loading (doesn't exist / disabled) (extension name included) |
-| `client.cogs.unload(name: String) => undefined` | Unload a cog (extension name included) |
+| `client.cogs.load(name: String) => Boolean or undefined` | Load a cog, a bool return value represents whether the cog was loaded, an undefined means theres an error preventing the cog from loading (doesn't exist / disabled) |
+| `client.cogs.unload(name: String) => undefined` | Unload a cog |
 | `client.hooks.add({event: String, priority: Number, func: async function => Boolean}) => undefined` | Add a hook |
 | `client.hooks.sub({event: String, priority: Number, func: async function => Boolean}) => undefined` | Sub a hook |
 
@@ -89,13 +89,15 @@ Config
 "cogname": {
 	"name": <value>
 }
-Requires
-nop: to do something useless
 */
 
 module.exports.disabled = false; // optional
 
 module.exports.desc = "<what I does>"; // optional
+
+module.exports.requires = { "mymodule": "doing stuff", "anothermodule": "doing other stuff" }; // optional
+
+module.exports.requiresoptional = { "mightneed": "do extra stuff" }; // optional
 
 module.exports.hooks = { // optional
 	...
@@ -168,7 +170,6 @@ args: [
 ```
 In the command function, `this` refers to the (message)[https://discord.js.org/#/docs/discord.js/main/class/Message] or (interaction)[https://discord.js.org/#/docs/discord.js/main/class/CommandInteraction] object with some extras.
 These extras are:
-`this.author.isNotPerson`: Whether the author is a bot, system or webhook message or just a user
 `this.author.isAdmin`: Whether the author is a bot admin (defined in `conf.main.admins`)
 `async this.embedreply(Object<opts>) => undefined`: Send an embed reply
 `async this.errorreply(msg: String) => undefined`: A shorthand for an error message embedreply

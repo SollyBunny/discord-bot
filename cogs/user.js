@@ -9,42 +9,48 @@ module.exports.cmds = {
 			[dc.USER, "user", "Who's profile", false],
 		],
 		func: async function (args) {
-			args = args[0] || this.member || this.user;
+			const user = args[0];
 			let embed = {
-				thumb: args.displayAvatarURL({ dynamic: true }),
-				colorraw: args.displayColor,
+				thumb: user.displayAvatarURL({ dynamic: true }),
+				color: [255, 255, 255],
+				colorraw: user.displayColor,
 				fields: [
 					{
 						name: "ID",
-						value: `\`${args.id}\``,
-						inline: true
+						value: `\`${user.id}\``,
+						inline: false
 					}, {
 						name: "Created",
-						value: args.user.createdAt.toString(),
-						inline: true
+						value: (user.user || user).createdAt.toString(),
+						inline: false
 					}
 				]
 			};
-			if (args.user) { // in guild
+			if (user.user) { // in guild
 				embed.fields.push({
-					name: "Joined",
-					value: args.joinedAt.toString(),
+					name: "Color",
+					value: util.u24tohex(user.displayColor),
 					inline: true
 				});
-				if (args._roles.length > 0) {
+				embed.fields.push({
+					name: "Joined",
+					value: user.joinedAt.toString(),
+					inline: true
+				});
+				if (user._roles.length > 0) {
 					embed.fields.push({
 						name: "Roles",
-						value: args._roles.map(i => {
+						value: user._roles.map(i => {
 							return `<@&${i}>`;
 						}).join(" "),
 						inline: true
 					});
 				}
 			}
-			if (args.nickname)
-				embed.title = `${args.nickname} (${args.tag || args.user.tag})`;
+			if (user.nickname)
+				embed.title = `${user.nickname} (${user.tag || user.user.tag})`;
 			else
-				embed.title = args.tag || args.user.tag;
+				embed.title = user.tag || user.user.tag;
 			this.embedreply(embed);
 		}
 	},
@@ -54,10 +60,11 @@ module.exports.cmds = {
 			[dc.USER, "user", "Who's profile picture", false],
 		],
 		func: async function (args) {
-			args = args[0] || this.member || this.user;
+			const user = args[0];
 			this.embedreply({
-				title: `${args.nickname || args.username}'s avatar`,
+				title: `${user.displayName}'s avatar`,
 				image: args.displayAvatarURL({ dynamic: true }) + "?size=512",
+				color: [255, 255, 255],
 				colorraw: args.displayColor
 			});
 		}
@@ -69,16 +76,48 @@ module.exports.cmds = {
 		],
 		dm: false,
 		func: async function (args) {
-			console.log(args);
-			args = args[0] || this.member || this.user;
-			let perms = args.permissions.serialize();
+			const user = args[0];
 			this.embedreply({
-				title: `${args.displayName}'s permissions`,
-				msg: Object.keys(perms).filter(i => {
-					return perms[i];
-				}).join(", "),
-				colorraw: args.displayColor
+				title: `${user.displayName}'s permissions`,
+				msg: util.bitfieldserialize(user.permissions).join(", "),
+				color: [255, 255, 255],
+				colorraw: user.displayColor
 			});
 		}
 	},
+	"roleinfo": {
+		desc: "Get info about a role",
+		args: [
+			[dc.ROLE, "role", "What role", true],
+		],
+		dm: false,
+		func: async function (args) {
+			let role = args[0];
+			console.log(role, Object.getOwnPropertyNames(role.permissions));
+			console.dir(role.permissions);
+			this.embedreply({
+				title: `${role.name} ${role.unicodeEmoji || ""}`,
+				colorraw: role.color,
+				fields: [
+					{
+						name: "ID",
+						value: `\`${role.id}\``,
+						inline: false
+					}, {
+						name: "Color",
+						value: util.u24tohex(role.color),
+						inline: true
+					}, {
+						name: "Position",
+						value: `${role.rawPosition}${util.stndrd(role.rawPosition)} / ${(await role.guild.roles.fetch()).size}`,
+						inline: true
+					}, {
+						name: "Permissions",
+						value: role.permissions ? util.bitfieldserialize(role.permissions).join(", ") : "None",
+						inline: false
+					}
+				]
+			})
+		}
+	}
 };

@@ -12,91 +12,6 @@ function getMaxseconds() {
 let numbatRaw;
 let spawn;
 let exec;
-try {
-	exec = require("get-pty-output").exec;
-} catch (e) {
-	log.error(`Cannot import get-pty-output, ${e}`);
-	spawn = require("child_process").spawn;
-}
-
-if (exec) {
-	numbatRaw = calc => {
-		return new Promise(resolve => {
-			tempFile = `temp/${Math.random()}${Date.now()}.nbt`;
-			fs.writeFileSync(tempFile, calc, { flag: "w" });
-			const errors = [];
-			function done(output, error) {
-				if (output === undefined) return;
-				output = output.trim();
-				if (output.length === 0 && error.length === 0) {
-					errors.push("No output");
-					output = undefined;
-				}
-				resolve({ errors, error, output });
-				output = undefined;
-			}
-			exec(`numbat ${tempFile}`, {
-				timeout: getMaxseconds(),
-				purify: true,
-				// TODO use manual data yoinking to collect data even on error
-			}).catch(error => {
-				// console.log("hello", error, "ORANGE", error.toString().length, error.toString(), "del", JSON.stringify(error), "end");
-				error = error.toString();
-				if (error.indexOf(tempFile) === -1) {
-					errors.push(error);
-				} else {
-					done("", error);
-				}
-			}).then(output => {
-				if (!output) return;
-				if (output.truncated) errors.push(`Took longer than ${getMaxseconds()}s`);
-				done(output.output, "");
-			}).finally(() => {
-				fs.rmSync(tempFile, { force: true });
-			});
-		});
-	};
-} else {
-	numbatRaw = calc => {
-		return new Promise((resolve, reject) => {
-			const proc = spawn("numbat", [], {
-				encoding: "utf8",
-			});
-			let output = "";
-			let error = "";
-			proc.stdout.on("data", data => { output += data; });
-			proc.stderr.on("data", data => { error += data; });
-			proc.stdin.write(calc);
-			proc.stdin.end();
-			const errors = [];
-			function done() {
-				if (output === undefined) return;
-				output = output.trim();
-				if (output.length === 0 && error.length === 0) {
-					errors.push("No output");
-					output = undefined;
-				}
-				resolve({ errors, error, output });
-				output = undefined;
-			}
-			const timeout = setTimeout(() => {
-				proc.kill("SIGKILL");
-				errors.push(`Took longer than ${getMaxseconds()}s`);
-				done();
-			}, getMaxseconds() * 1000);
-			proc.on("exit", code => {
-				clearTimeout(timeout);
-				done();
-			});
-			proc.on("error", e => {
-				clearTimeout(timeout);
-				proc.kill("SIGKILL");
-				errors.push(e);
-				done();
-			});
-		});
-	};
-}
 
 const ansiiRegex = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
 const numbatAns = {};
@@ -151,6 +66,95 @@ async function numbat(owner, input) {
 
 module.exports.desc = "Use numbat to perform a calculation, see https://numbat.dev/doc/ for info";
 
+module.exports.requireoptional = { "get-pty-output": "Colored numbat output" };
+
+module.exports.onload = onload = async function() {
+	try {
+		exec = require("get-pty-output").exec;
+	} catch (e) {
+		log.error(`Cannot import get-pty-output, ${e}`);
+		spawn = require("child_process").spawn;
+	}
+	if (exec) {
+		numbatRaw = calc => {
+			return new Promise(resolve => {
+				tempFile = `temp/${Math.random()}${Date.now()}.nbt`;
+				fs.writeFileSync(tempFile, calc, { flag: "w" });
+				const errors = [];
+				function done(output, error) {
+					if (output === undefined) return;
+					output = output.trim();
+					if (output.length === 0 && error.length === 0) {
+						errors.push("No output");
+						output = undefined;
+					}
+					resolve({ errors, error, output });
+					output = undefined;
+				}
+				exec(`numbat ${tempFile}`, {
+					timeout: getMaxseconds(),
+					purify: true,
+					// TODO use manual data yoinking to collect data even on error
+				}).catch(error => {
+					// console.log("hello", error, "ORANGE", error.toString().length, error.toString(), "del", JSON.stringify(error), "end");
+					error = error.toString();
+					if (error.indexOf(tempFile) === -1) {
+						errors.push(error);
+					} else {
+						done("", error);
+					}
+				}).then(output => {
+					if (!output) return;
+					if (output.truncated) errors.push(`Took longer than ${getMaxseconds()}s`);
+					done(output.output, "");
+				}).finally(() => {
+					fs.rmSync(tempFile, { force: true });
+				});
+			});
+		};
+	} else {
+		numbatRaw = calc => {
+			return new Promise((resolve, reject) => {
+				const proc = spawn("numbat", [], {
+					encoding: "utf8",
+				});
+				let output = "";
+				let error = "";
+				proc.stdout.on("data", data => { output += data; });
+				proc.stderr.on("data", data => { error += data; });
+				proc.stdin.write(calc);
+				proc.stdin.end();
+				const errors = [];
+				function done() {
+					if (output === undefined) return;
+					output = output.trim();
+					if (output.length === 0 && error.length === 0) {
+						errors.push("No output");
+						output = undefined;
+					}
+					resolve({ errors, error, output });
+					output = undefined;
+				}
+				const timeout = setTimeout(() => {
+					proc.kill("SIGKILL");
+					errors.push(`Took longer than ${getMaxseconds()}s`);
+					done();
+				}, getMaxseconds() * 1000);
+				proc.on("exit", code => {
+					clearTimeout(timeout);
+					done();
+				});
+				proc.on("error", e => {
+					clearTimeout(timeout);
+					proc.kill("SIGKILL");
+					errors.push(e);
+					done();
+				});
+			});
+		};
+	}
+}
+
 module.exports.cmds = {
 	"numbat": {
 		desc: "Use numbat to perform a calculation, see https://numbat.dev/doc/ for info",
@@ -168,7 +172,7 @@ module.exports.hooks = [
 		event: "messageCreate",
 		priority: 20,
 		func: async function() {
-			if (this.author.isNotPerson) return;
+			if (util.usernotperson(this.author)) return;
 			if (!this.content.startsWith("=") && !this.content.startsWith("```=")) {
 				return;
 			}

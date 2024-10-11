@@ -14,7 +14,7 @@ module.exports.hooks = [
 		event: "messageCreate",
 		priority: 10,
 		func: async function() {
-			if (this.author.isNotPerson) return;
+			if (util.usernotperson(this.author)) return;
 			if (this.content !== client.user.toString()) return;
 			this.embedreply({
 				title: "Help",
@@ -83,7 +83,7 @@ module.exports.cmds = {
 					}
 				});
 				this.embedreply({
-					title: `Help (page ${args})`,
+					title: `Help (page ${args + 1})`,
 					fields: data,
 					color: conf.system.color
 				});

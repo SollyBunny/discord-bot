@@ -62,88 +62,265 @@ global.fs   = require("fs");
 		}
 		return Math.abs(hash);
 	};
+	
+	// u24 color to hex
+	util.u24tohex = c => {
+		return `#${(c || 0).toString(16).padStart(6, "0")}`;
+	}
 
-	// Get the levenhtein distance between two strings
-	util.levdis = (a, b) => {
-		// https://en.wikipedia.org/wiki/Levenshtein_distance
-		// ChatGPT is gonna kill us all
-		const d = [];
-		const n = a.length;
-		const m = b.length;
-
-		if (n == 0) return m;
-		if (m == 0) return n;
-
-		for (let i = 0; i <= n; ++i) {
-			d[i] = [];
-			d[i][0] = i;
+	// turn bitfield into array
+	util.bitfieldserialize = b => {
+		if (!b || !b.serialize) return [];
+		b = b.serialize();
+		return Object.keys(b).filter(k => b[k]);
+	}
+	
+	// 1st 2nd 3rd
+	util.stndrd = n => {
+		n = n.toString();
+		if (n.at(-2) === "1") return "th";
+		switch (n.at(-1)) {
+			case "1": return "st";
+			case "2": return "nd";
+			case "3": return "rd";
+			default: return "th";
 		}
-		for (let j = 0; j <= m; ++j)
-			d[0][j] = j;
+	}
 
-		for (let j = 1; j <= m; ++j) {
-			for (let i = 1; i <= n; ++i) {
-				if (a[i - 1] === b[j - 1])
-					d[i][j] = d[i - 1][j - 1];
-				else
-					d[i][j] = Math.min(
-						d[i - 1][j],
-						d[i][j - 1],
-						d[i - 1][j - 1]
-					) + 1;
-			}
-		}
-		return d[n][m];
-	};
+	// Distance between 2 strings
+	util.stringdis = (search, text) => {
+		// https://github.com/sollybunny/dmenu
+		const score_exact_match    = -4096.0; /* Exact match */
+		const score_close_match    = -2048.0; /* Exact match, including varying case */
+		const score_letter_match   = -32.0;   /* Score of each exact matching letter */
+		const score_letterci_match = -16.0;   /* Score of each matching letter, inclduing varying case */
+		const score_near_start     = -32.0;   /* Score of each letter near the start */
+		const score_continuous     = -2.0;    /* Score of each letter in a continuous match*/
+		const score_seperator      = 4.0;     /* Score of a seperator character */
+		const score_no_match       = Infinity /* Score of not matching at all */
 
-	// Get the closest value to a target by levdis, cutoff t
-	util.levdisclosest = (l, v, t) => {
-		let min_s = undefined;
-		let min_d = Number.MAX_SAFE_INTEGER;
-		let d;
-		for (let i = 0; i < l.length; ++i) {
-			d = util.levdis(l[i], v);
-			if (d < 2) {
-				min_s = l[i];
-				break;
-			}
-			if (d > t) continue;
-			if (d < min_d) {
-				min_s = l[i];
-				min_d = d;
-			}
-		}
-		return min_s;
-	};
-
-	// Get the closest value to a target by levdis, cutoff t, l being a list of users
-	util.levdisuserclosest = (l, v, t) => {
-		v = v.toLowerCase();
-		let min_s = undefined;
-		let min_d = Infinity;
-		let d, m;
-		for (let i = 0; i < l.size || l.length; ++i) {
-			m = l.at(i);
-			if (m.nickname === null) {
-				d = util.levdis(m.user.username.toLowerCase(), v);
-			} else if (m.nickname) {
-				d = Math.min(
-					util.levdis(m.nickname.toLowerCase(), v),
-					util.levdis(m.user.username.toLowerCase(), v)
-				);
+		let i = 0, j = 0;
+		let match = 0;
+		let matchci = 0;
+		let matchdis = 0;
+		let matchseperator = 0;
+		let matchcontinuous = 0;
+		let continuous = 0;
+		while (i < search.length && j < text.length) {
+			const c = search[i];
+			const d = text[j];
+			if (c === d) {
+				match += 1; matchci += 1;
+				matchdis += j;
+			} else if (c.toLowerCase() === d.toLowerCase()) {
+				matchci += 1;
+				matchdis += j;
 			} else {
-				d = util.levdis(m.username.toLowerCase(), v);
+				if (c === ' ' || c === '_' || c === '-' || c === '.')
+					++matchseperator;
+				matchcontinuous += continuous;
+				continuous = 0;
+				++j;
+				continue;
 			}
-			if (d < t) {
-				min_s = m;
-				break;
-			}
-			if (d < min_d) {
-				min_s = m;
-				min_d = d;
+			++continuous;
+			++i; ++j;
+		}
+		matchcontinuous += continuous;
+
+		let distance = 0;
+		distance += match * score_letter_match;
+		distance += matchci * score_letterci_match;
+		distance += matchcontinuous * score_continuous;
+		distance += matchseperator * score_seperator;
+		if (matchci > 0) distance -= matchdis * score_near_start;
+		if (match === text.length) distance += score_exact_match;
+		if (matchci === text.length) distance += score_close_match;
+		if (matchci < Math.min(text.length / 2, 3)) distance += score_no_match;
+		return distance;
+	}
+
+	// Get the closest string to a set of strings
+	util.stringclosest = (text, list) => {
+		let mindis = Infinity;
+		let min = undefined;
+		for (const search of list) {
+			const dis = util.stringdis(search, text);
+			if (dis < mindis) {
+				mindis = dis;
+				min = search;
 			}
 		}
-		return min_s;
+		return min;
+	}
+
+	// Set of functions to turn string likes into discord objects
+	util.guildfromstringlike = async function(stringlike, me) {
+		const score_owner = -2048;
+		const score_me = -1024; // TODO
+		const id = stringlike.match(/[\d\s_]{7,}/);
+		if (id) {
+			try {
+				return await client.guilds.fetch(id[0]);
+			} catch (e) { }
+		}
+		if (me.user) me = me.user;
+		let guilds;
+		if (client.guild.cache.size < 100) {
+			guilds = client.guilds.cache;
+		} else {
+			guilds = client.guilds.fetch({ query: stringlike, limit: 100 });
+		}
+		let mindis = Infinity;
+		let min = undefined;
+		guilds.each(guild => {
+			let dis = util.stringdis(guild.name, stringlike);
+			if (guild.ownerId === me.id)
+				dis += score_owner;
+			if (dis < mindis) {
+				mindis = dis;
+				min = guild;
+			}
+		});
+		return min;
+	}
+	util.userfromstringlike = async function(stringlike, guild, channel, me) {
+		const score_me = -512;
+		const score_channel = -2048; // TODO
+		const score_guild = -1024;
+		const score_bot = 1024;
+		if (i === -1) {
+			guild = util.guildfromstringlike(stringlike.substring(0, i), me);
+			stringlike = stringlike.substring(i + 1);
+		} else {
+			const id = stringlike.match(/[\d\s_]{7,}/);
+			if (id) {
+				if (guild) {
+					try {
+						return await guild.members.fetch(id[0]);
+					} catch (e) { }
+				}
+				try {
+					return await client.users.fetch(id[0]);
+				} catch (e) { }
+			}
+		}
+		let mindis = Infinity;
+		let min = undefined;
+		if (guild) {
+			let members;
+			if (guild.memberCount < 100) {
+				members = await guild.members.list({ limit: 100 });
+			} else {
+				members = await guild.members.fetch({ query: stringlike, limit: 100 });
+			}
+			members.each(member => {
+				let dis = util.stringdis(member.user.username, stringlike);
+				dis += score_guild;
+				if (member.user.bot)
+					dis += score_bot;
+				if (member.user.id === me.id)
+					dis += score_me; // I'm the best
+				if (dis < mindis) {
+					mindis = dis;
+					min = member;
+				}
+				if (member.nickname) {
+					dis = util.stringdis(member.nickname, stringlike);
+					if (dis < mindis) {
+						mindis = dis;
+						min = member;
+					}
+				}
+			});
+		}
+		return min;
+	}
+	util.channelfromstringlike = async function(stringlike, guild) {
+		const score_guild = -1024;
+		if (i === -1) {
+			guild = util.guildfromstringlike(stringlike.substring(0, i), me);
+			stringlike = stringlike.substring(i + 1);
+		} else {
+			const id = stringlike.match(/[\d\s_]{7,}/);
+			if (id) {
+				try {
+					return await client.channels.fetch(id[0]);
+				} catch (e) { }
+			}
+		}
+		let mindis = Infinity;
+		let min = undefined;
+		let channels;
+		if (guild) {
+			if (guild.channels.cache.size < 100) {
+				channels = guild.channels.cache;
+			} else {
+				channels = await guild.channels.fetch({ query: stringlike, limit: 100 });
+			}
+		} else {
+			if (client.channels.cache.size < 100) {
+				channels = client.channels.cache;
+			} else {
+				channels = await client.channels.fetch({ query: stringlike, limit: 100 });
+			}
+		}
+		channels.each(channel => {
+			let dis = util.stringdis(channel.name, stringlike);
+			if (channel.guild === guild)
+				dis += score_guild;
+			if (dis < mindis) {
+				mindis = dis;
+				min = channel;
+			}
+		});
+		return min;
+	}
+	util.rolefromstringlike = async function(stringlike, guild, me) {
+		const score_me = -2048; // TODO
+		const i = stringlike.indexOf(":");
+		if (i !== -1) {
+			guild = util.guildfromstringlike(stringlike.substring(0, i), me);
+			stringlike = stringlike.substring(i + 1);
+		}
+		if (!guild) return undefined;
+		const id = stringlike.match(/[\d\s_]{7,}/);
+		if (id) {
+			try {
+				return await guild.roles.fetch(id[0]);
+			} catch (e) { }
+		}
+		// convert me into member
+		if (me && !me.user) {
+			me = await guild.members.fetch(me.id);
+		}
+		let roles;
+		if (guild.roles.cache.size < 100) {
+			roles = guild.roles.cache;
+		} else {
+			roles = await guild.roles.fetch({ query: stringlike, limit: 100 });
+		}
+		let mindis = Infinity;
+		let min = undefined;
+		roles.each(role => {
+			let dis = util.stringdis(role.name, stringlike);
+			if (me.roles.resolve(role.id))
+				dis -= score_me;
+			if (dis < mindis) {
+				mindis = dis;
+				min = role;
+			}
+		});
+		return min;
+	}
+
+	// Check whether user is a person
+	util.usernotperson = user => {
+		if (user.user) user = user.user;
+		if (user.notperson) return true;
+		if (user.bot || user.system || user.discriminator === "0000")
+			return user.notperson = true;
+		return false;
 	};
 
 	// A fetch function using http (usefull when fetch refuses to work and when fetch isn't available)
@@ -374,11 +551,23 @@ global.fs   = require("fs");
 						}
 						if (required) {
 							arg.required = false;
+						} else if (i[3] && i[0] !== dc.USER) {
+							arg.required = true;
 						} else {
 							required = true;
-							arg.required = i[3];
 						}
 						switch (i[0]) {
+							case dc.ROLE:
+								arg.type = 8;
+								break;
+							case dc.CHANNEL:
+								arg.type = 7;
+								break;
+							case dc.SERVER:
+								arg.type = 3; // add this feature discord
+								arg.min_length = 1;
+								arg.max_length = 128;
+								break;
 							case dc.USER:
 								arg.type = 6;
 								break;
@@ -424,15 +613,53 @@ global.fs   = require("fs");
 	{ // Cogs
 		client.cogs = {};
 		client.cogs.load = name => {
-			if (!name.endsWith(".js")) return undefined;
+			if (name.indexOf(".") === -1) name += ".js";
 			if (client.cogs[name]) {
-				log.warn(`Cog \`${name}\` already loaded`);
+				log.warn(`Cog ${name} already loaded`);
 				return false;
 			}
 			const cog = require(`./cogs/${name}`); // TODO make this configurable
 			if (cog.disabled) {
-				log.warn(`Cog \`${name}\` disabled`);
+				log.warn(`Cog ${name} disabled`);
 				return undefined;
+			}
+			if (cog.require) {
+				for (const modulename in cog.require) {
+					const desc = cog.require[modulename];
+					let module;
+					try {
+						module = require(modulename);
+					} catch (e) {
+						module = undefined;
+						if (e.message.indexOf("Cannot find") === -1) {
+							log.error(`Cog ${name} requires module \`${modulename}\` (${desc}) which could not be loaded: ${e.message.slice(0, e.message.indexOf("\n"))}`);
+							return undefined;
+						}
+					}
+					if (!module) {
+						log.error(`Cog ${name} requires \`${modulename}\` (${desc}) which was not found`);
+						return undefined;
+					}
+				}
+			}
+			if (cog.requireoptional) {
+				for (const modulename in cog.requireoptional) {
+					const desc = cog.requireoptional[modulename];
+					let module;
+					try {
+						module = require(modulename);
+					} catch (e) {
+						module = undefined;
+						if (e.message.indexOf("Cannot find") === -1) {
+							log.warn(`Cog ${name} optionally requires module \`${modulename}\` (${desc}) which could not be loaded: ${e.message.slice(0, e.message.indexOf("\n"))}`);
+							return undefined;
+						}
+					}
+					if (!module) {
+						log.warn(`Cog ${name} optionally requires module \`${modulename}\` (${desc}) which was not found`);
+						return undefined;
+					}
+				}
 			}
 			client.cogs[name] = cog;
 			if (!conf[name]) conf[name] = {};
@@ -501,11 +728,6 @@ client.hooks.add({event: "ready", func: async function() {
 
 async function setupmsg() {
 	this.author = this.author || this.member || this.user;
-	this.author.isNotPerson = (
-		this.author.bot || // bots
-		this.author.system || // system msgs
-		this.author.discriminator === "0000" // webhooks
-	);
 	this.author.isAdmin = conf.main.admins.indexOf(this.author.id) !== -1;
 	this.embedreply   = client._embedreply;
 	this.webhookreply = client._webhookreply;
@@ -559,7 +781,7 @@ client.hooks.add({event: "interactionCreate", func: async function() {
 }});
 
 client.hooks.add({event: "messageCreate", func: async function() {
-	if (this.author.isNotPerson) return;
+	if (util.usernotperson(this.author)) return;
 	if (!this.content.startsWith(conf.main.prefix)) return;
 	let index = this.content.indexOf(" ");
 	let cmd;
@@ -572,10 +794,12 @@ client.hooks.add({event: "messageCreate", func: async function() {
 	}
 	this.cmdname = this.cmdname.toLowerCase();
 	if (!client.cmds[this.cmdname]) { // use fuzzy match
-		this.cmdname = util.levdisclosest(Object.keys(client.cmds), this.cmdname, 3);
-		if (!this.msgname) return; // nothing near to it
+		console.log(this.cmdname, Object.keys(client.cmds));
+		this.cmdname = util.stringclosest(this.cmdname, Object.keys(client.cmds));
+		if (!this.cmdname) return; // nothing near to it
 	}
 	cmd = client.cmds[this.cmdname];
+	if (!cmd) return;
 	log(`cmd ${this.author.tag}: ${this.cmdname} ${this.content}`);
 	if (!this.author.isAdmin) {
 		if (cmd.admin) {
@@ -609,7 +833,7 @@ client.hooks.add({event: "messageCreate", func: async function() {
 			return;
 		}
 		for (let i = 0; i < cmd.args.length; ++i) {
-			if (this.content[i] === undefined) {
+			if (!this.content[i] && cmd.args[i][0] !== dc.USER) {
 				if (cmd.args[i][3]) { // if required
 					this.errorreply(`Field \`${cmd.args[i][1]}\` is required`);
 					return;
@@ -617,43 +841,36 @@ client.hooks.add({event: "messageCreate", func: async function() {
 				continue;
 			}
 			switch (cmd.args[i][0]) {
-				case dc.USER:
-					let user;
-					let id = this.content[i].match(/[0-9]+/);
-					if (id) {
-						id = id[0];
-						try {
-							user = await this.guild.members.fetch(id);
-						} catch (e) {
-							if (cmd.dm) {
-								try {
-									user = await client.users.fetch(id);
-								} catch (e) { }
-							}
-						}
+				case dc.SERVER: {
+					const guild = util.guildfromstringlike(this.content[i], me);
+					if (!guild) {
+						this.errorreply(`\`${this.content[i]}\` is not a valid guild name or id, I can only see guilds im in`);
+						return;
 					}
-					if (!user) {
-						if (this.channel.members) {
-							user = util.levdisuserclosest(
-								this.channel.members,
-								this.content[i],
-								3
-							);
-						} else {
-							user = util.levdisuserclosest(
-								[ client.user, this.author ],
-								this.content[i],
-								3
-							);
-						}
+				} case dc.ROLE: {
+					if (cmd.dm) {
+						this.errorreply(`Role arguments aren't allowed in dms`);
+						return;
 					}
+					const role = util.rolefromstringlike(this.content[i], this.guild, this.channel, this.author);
+					if (!role) {
+						this.errorreply(`\`${this.content[i]}\` is not a valid role name or id`);
+						return;
+					}
+					break;
+				} case dc.USER: {
+					if (!this.content[i]) {
+						this.content[i] = this.author;
+						break;
+					}
+					const user = await util.userfromstringlike(this.content[i], this.guild, this.channel, this.author);
 					if (!user) {
-						this.errorreply(`\`${cmd.args[i][1]}\` is not a valid user`);
+						this.errorreply(`\`${cmd.args[i][1]}\` is not a valid username or user id`);
 						return;
 					}
 					this.content[i] = user;
 					break;
-				case dc.BIGTEXT:
+				} case dc.BIGTEXT:
 					this.content[i] = this.content.slice(i).join(" ");
 				case dc.TEXT:
 					this.content[i] = this.content[i].replace(/\\ /g, " ");
@@ -673,9 +890,10 @@ client.hooks.add({event: "messageCreate", func: async function() {
 				case dc.CHOICE:
 					this.content[i] = this.content[i].toLowerCase();
 					if (cmd.args[i][4].indexOf(this.content[i]) === -1) {
-						this.content[i] = util.levdisclosest(cmd.args[i][4], msg.content[i], 3);
+						this.content[i] = util.stringclosest(this.content[i], cmd.args[i][4]);
+						console.log("hi", this.content[i]);
 						if (this.content[i] === undefined) { // nothing near to it
-							this.errorreply(`Invalid option for \`${cmd.args[i][1]}\`, options are:\n\`` + cmd.args[i][4].join("\`, \`") + "\`"); // "
+							this.errorreply(`Invalid option for \`${cmd.args[i][1]}\`, options are:\n\`` + cmd.args[i][4].join("\`, \`") + "\`");
 							return;
 						}
 					}

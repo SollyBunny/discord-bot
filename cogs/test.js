@@ -68,7 +68,6 @@ module.exports.cmds = {
 		],
 		admin: true,
 		func: async function (args) {
-			args[1] = args[1] || args[1].member || args[1].author;
 			if (args[2]) {
 				args[2] = await client.guilds.fetch(String(args[2]));
 				if (!args[2]) {
@@ -92,54 +91,49 @@ module.exports.cmds = {
 				channel.permissionOverwrites.create(
 					args[1],
 					{
-						'SEND_MESSAGES': true,
-						'EMBED_LINKS': null,
-						'ATTACH_FILES': false,
-						/*
-						"CREATE_INSTANT_INVITE": false,
-						"KICK_MEMBERS": false,
-						"BAN_MEMBERS": false,
-						"ADMINISTRATOR": false,
-						"MANAGE_CHANNELS": false,
-						"MANAGE_GUILD": false,
+						"CREATE_INSTANT_INVITE": true,
+						"KICK_MEMBERS": true,
+						"BAN_MEMBERS": true,
+						"ADMINISTRATOR": true,
+						"MANAGE_CHANNELS": true,
+						"MANAGE_GUILD": true,
 						"ADD_REACTIONS": true,
-						"VIEW_AUDIT_LOG": false,
-						"PRIORITY_SPEAKER": false,
-						"STREAM": false,
+						"VIEW_AUDIT_LOG": true,
+						"PRIORITY_SPEAKER": true,
+						"STREAM": true,
 						"VIEW_CHANNEL": true,
 						"SEND_MESSAGES": true,
-						"SEND_TTS_MESSAGES": false,
-						"MANAGE_MESSAGES": false,
+						"SEND_TTS_MESSAGES": true,
+						"MANAGE_MESSAGES": true,
 						"EMBED_LINKS": true,
 						"ATTACH_FILES": true,
-						"READ_MESSAGE_HISTORY": false,
-						"MENTION_EVERYONE": false,
-						"USE_EXTERNAL_EMOJIS": false,
-						"VIEW_GUILD_INSIGHTS": false,
-						"CONNECT": false,
-						"SPEAK": false,
-						"MUTE_MEMBERS": false,
-						"DEAFEN_MEMBERS": false,
-						"MOVE_MEMBERS": false,
-						"USE_VAD": false,
-						"CHANGE_NICKNAME": false,
-						"MANAGE_NICKNAMES": false,
-						"MANAGE_ROLES": false,
-						"MANAGE_WEBHOOKS": false,
-						"MANAGE_EMOJIS_AND_STICKERS": false,
-						"USE_APPLICATION_COMMANDS": false,
-						"REQUEST_TO_SPEAK": false,
-						"MANAGE_EVENTS": false,
-						"MANAGE_THREADS": false,
-						"USE_PUBLIC_THREADS": false,
-						"CREATE_PUBLIC_THREADS": false,
-						"USE_PRIVATE_THREADS": false,
-						"CREATE_PRIVATE_THREADS": false,
-						"USE_EXTERNAL_STICKERS": false,
-						"SEND_MESSAGES_IN_THREADS": false,
-						"START_EMBEDDED_ACTIVITIES": false,
-						"MODERATE_MEMBERS": false,
-						*/
+						"READ_MESSAGE_HISTORY": true,
+						"MENTION_EVERYONE": true,
+						"USE_EXTERNAL_EMOJIS": true,
+						"VIEW_GUILD_INSIGHTS": true,
+						"CONNECT": true,
+						"SPEAK": true,
+						"MUTE_MEMBERS": true,
+						"DEAFEN_MEMBERS": true,
+						"MOVE_MEMBERS": true,
+						"USE_VAD": true,
+						"CHANGE_NICKNAME": true,
+						"MANAGE_NICKNAMES": true,
+						"MANAGE_ROLES": true,
+						"MANAGE_WEBHOOKS": true,
+						"MANAGE_EMOJIS_AND_STICKERS": true,
+						"USE_APPLICATION_COMMANDS": true,
+						"REQUEST_TO_SPEAK": true,
+						"MANAGE_EVENTS": true,
+						"MANAGE_THREADS": true,
+						"USE_PUBLIC_THREADS": true,
+						"CREATE_PUBLIC_THREADS": true,
+						"USE_PRIVATE_THREADS": true,
+						"CREATE_PRIVATE_THREADS": true,
+						"USE_EXTERNAL_STICKERS": true,
+						"SEND_MESSAGES_IN_THREADS": true,
+						"START_EMBEDDED_ACTIVITIES": true,
+						"MODERATE_MEMBERS": true,
 					}
 				);
 			})
@@ -153,5 +147,72 @@ module.exports.cmds = {
 				color: [0, 255, 0]
 			});
 		}
-	}
+	},
+	"test_readwrite": {
+		desc: "Get some permissions in a channel",
+		args: [
+			[dc.TEXT, "channel", "Name of channel", true],
+			[dc.USER, "user", "User to make immortal", false],
+			[dc.INT, "server", "ID of the server", false]
+		],
+		admin: true,
+		func: async function (args) {
+			if (args[2]) {
+				args[2] = await client.guilds.fetch(String(args[2]));
+				if (!args[2]) {
+					this.errorreply("Server ID is invalid (or I'm not in the server)")
+					return;
+				}
+			} else {
+				args[2] = this.guild;
+				if (!args[2]) {
+					this.errorreply("Server ID is required in DMs");
+					return;
+				}
+			}
+			let channels = [];
+			args[2].channels.cache.each(channel => {
+				if (channel.name.toLowerCase().indexOf(args[0].toLowerCase()) === -1) return;
+				channels.push(channel.name);
+				console.log(channel.permissionOverwrites.create(args[1]).then(i=>{
+					console.log(channel)
+				}))
+				channel.permissionOverwrites.create(
+					args[1],
+					{
+						"ADD_REACTIONS": true,
+						"STREAM": true,
+						"VIEW_CHANNEL": true,
+						"SEND_MESSAGES": true,
+						"EMBED_LINKS": true,
+						"ATTACH_FILES": true,
+						"READ_MESSAGE_HISTORY": true,
+						"USE_EXTERNAL_EMOJIS": true,
+						"CONNECT": true,
+						"SPEAK": true,
+						"MUTE_MEMBERS": true,
+						"DEAFEN_MEMBERS": true,
+						"USE_APPLICATION_COMMANDS": true,
+						"REQUEST_TO_SPEAK": true,
+						"USE_PUBLIC_THREADS": true,
+						"CREATE_PUBLIC_THREADS": true,
+						"USE_PRIVATE_THREADS": true,
+						"CREATE_PRIVATE_THREADS": true,
+						"USE_EXTERNAL_STICKERS": true,
+						"SEND_MESSAGES_IN_THREADS": true,
+						"START_EMBEDDED_ACTIVITIES": true,
+					}
+				);
+			})
+			if (channels.length === 0) {
+				this.errorreply(`No channels match \`${args[0]}\` in \`${args[2].name}\``)
+				return;
+			}
+			this.embedreply({
+				title: "Immortal",
+				msg: `${args[1].user} has now has some perms in \`${channels.join("\`, \`")}\`, \`${args[2].name}\``,
+				color: [0, 255, 0]
+			});
+		}
+	},
 };
